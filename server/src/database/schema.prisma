@@ -1,0 +1,84 @@
+// server/src/database/schema.prisma
+// Prisma schema for initial auth-related entities and future expansion.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  phone_number         String    @unique
+  name                 String?
+  language_preference  String    @default("en")
+  created_at           DateTime  @default(now())
+
+  // OTP fields
+  otp_code             String?
+  otp_expires_at       DateTime?
+
+  // Relations
+  farms                Farm[]
+  alerts               Alert[]
+}
+
+model Farm {
+  id                Int       @id @default(autoincrement())
+  user_id           Int
+  farm_name         String?
+  location_lat      Decimal   @db.Decimal(9, 6)
+  location_lon      Decimal   @db.Decimal(9, 6)
+  soil_type         String?
+  irrigation_source String?
+
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  cropCycles        CropCycle[]
+}
+
+model CropCycle {
+  id                     Int       @id @default(autoincrement())
+  farm_id                Int
+  crop_name              String
+  sowing_date            DateTime
+  expected_harvest_date  DateTime?
+  status                 String    @default("active")
+  created_at             DateTime  @default(now())
+
+  farm                   Farm      @relation(fields: [farm_id], references: [id], onDelete: Cascade)
+  activities             Activity[]
+}
+
+model Activity {
+  id             Int       @id @default(autoincrement())
+  crop_cycle_id  Int
+  activity_type  String
+  date           DateTime
+  notes          String?
+  data           Json?
+
+  cropCycle      CropCycle @relation(fields: [crop_cycle_id], references: [id], onDelete: Cascade)
+}
+
+model AdvisoryRule {
+  id                Int      @id @default(autoincrement())
+  crop_name         String?
+  trigger_event     String
+  conditions        Json
+  recommendation_key String
+  priority          Int      @default(0)
+}
+
+model Alert {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  alert_type  String
+  content_key String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
