@@ -1,0 +1,190 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import { getAdminStats, getWeeklyIssues, broadcastAdvisory, type AdminStats, type WeeklyIssue } from '@/services/adminService';
+import { clearAuthToken, TOKEN_KEY } from '@/services/api';
+import { fetchStates, fetchCities, fetchConstituencies } from '@/services/locationService';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { BarChart3, Megaphone, Map } from 'lucide-react';
+
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [issues, setIssues] = useState<WeeklyIssue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [deliveries, setDeliveries] = useState<number | null>(null);
+
+  // Broadcast filters
+  const [bState, setBState] = useState('');
+  const [bCity, setBCity] = useState('');
+  const [bConstituency, setBConstituency] = useState('');
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [constituencies, setConstituencies] = useState<string[]>([]);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+    if (!token) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    (async () => {
+      try {
+        const [s, w] = await Promise.all([getAdminStats(), getWeeklyIssues()]);
+        setStats(s);
+        setIssues(w.issues);
+        // Load broadcast filter options
+        const st = await fetchStates();
+        setStates(st);
+      } catch (e: any) {
+        setError(e.message || 'Failed to load admin data');
+        const status = (e as any)?.status;
+        if (status === 401 || status === 403) {
+          window.location.href = '/admin/login';
+          return;
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const cs = await fetchCities(bState || undefined);
+      setCities(cs);
+      setBCity('');
+      setBConstituency('');
+      setConstituencies([]);
+    })();
+  }, [bState]);
+
+  useEffect(() => {
+    (async () => {
+      const cons = await fetchConstituencies(bState || undefined, bCity || undefined);
+      setConstituencies(cons);
+      setBConstituency('');
+    })();
+  }, [bState, bCity]);
+
+  const onBroadcast = async () => {
+    setDeliveries(null);
+    setError(null);
+    try {
+      const res = await broadcastAdvisory(message, 'ADMIN_BROADCAST', {
+        state: bState || undefined,
+        city: bCity || undefined,
+        constituency: bConstituency || undefined,
+      });
+      setDeliveries(res.delivered);
+      setMessage('');
+    } catch (e: any) {
+      setError(e.message || 'Failed to broadcast');
+    }
+  };
+
+  const onLogout = () => {
+    clearAuthToken();
+    window.location.href = '/admin/login';
+  };
+
+  if (loading) return <div className="max-w-4xl mx-auto">Loading dashboard…</div>;
+  
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <a href="/admin/geo" className="text-sm text-gray-700 hover:text-brand inline-flex items-center gap-1"><Map className="w-4 h-4" /> Geo Analytics</a>
+          <button onClick={onLogout} className="text-sm text-gray-700 hover:text-brand">Logout</button>
+        </div>
+      </div>
+
+      {error && <p className="text-red-600">{error}</p>}
+
+      {stats && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <CardContent>
+              <p className="text-sm text-gray-600">Registered Farmers</p>
+              <p className="text-2xl font-semibold">{stats.users}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <p className="text-sm text-gray-600">Farms</p>
+              <p className="text-2xl font-semibold">{stats.farms}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <p className="text-sm text-gray-600">Active Crop Cycles</p>
+              <p className="text-2xl font-semibold">{stats.cycles}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-emerald-700" /><CardTitle>Weekly Issues (last 7 days)</CardTitle></div>
+        </CardHeader>
+        <CardContent>
+          {issues.length === 0 ? (
+            <p className="text-sm text-gray-600">No recent issues logged.</p>
+          ) : (
+            <ul className="list-disc pl-6 text-sm text-gray-700">
+              {issues.map((i, idx) => (
+                <li key={idx} className="flex justify-between"><span>{i.type}</span><span className="font-medium">{i.count}</span></li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2"><Megaphone className="w-5 h-5 text-emerald-700" /><CardTitle>Broadcast Advisory</CardTitle></div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600">Send a short advisory. Optionally target by location.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium">State</label>
+              <select value={bState} onChange={(e) => setBState(e.target.value)} className="w-full rounded-md border px-3 py-2">
+                <option value="">All</option>
+                {states.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium">City</label>
+              <select value={bCity} onChange={(e) => setBCity(e.target.value)} className="w-full rounded-md border px-3 py-2">
+                <option value="">All</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Constituency</label>
+              <select value={bConstituency} onChange={(e) => setBConstituency(e.target.value)} className="w-full rounded-md border px-3 py-2">
+                <option value="">All</option>
+                {constituencies.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full rounded-md border px-3 py-2" rows={3} placeholder="e.g., Heavy rain expected in next 24h. Avoid spraying." />
+          <button onClick={onBroadcast} disabled={!message.trim()} className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50">Send Broadcast</button>
+          {deliveries !== null && (
+            <p className="text-green-700 text-sm">Delivered to {deliveries} users.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

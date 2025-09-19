@@ -29,6 +29,26 @@ const EnvSchema = z.object({
 
   // Feature flags
   DEMO_MODE: z.coerce.boolean().default(true), // allows OTP bypass for demo
+
+  // Admin settings
+  ADMIN_ALLOWED_DOMAINS: z.string().default('kerala.gov.in,punjab.gov.in,up.gov.in'),
+  ADMIN_DEMO_EMAIL: z.string().email().optional(),
+  ADMIN_DEMO_PASSWORD: z.string().optional(),
+  ADMIN_DEMO_OTP: z.string().default('000000'),
+
+  // Location fallback dataset (offline)
+  LOCATION_FALLBACK_FILE: z.string().optional(),
+  LOCATION_FALLBACK_STATES: z.string().optional(),
+
+  // Weather (Open-Meteo; no API key required)
+  WEATHER_UNITS: z.enum(['metric', 'imperial', 'standard']).default('metric'),
+  WEATHER_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(600),
+  WEATHER_DEFAULT_LAT: z.coerce.number().optional(),
+  WEATHER_DEFAULT_LON: z.coerce.number().optional(),
+
+  // Gen AI provider for chat/pest (optional; demo fallback if unset)
+  GEN_AI_PROVIDER: z.string().default('gemini'),
+  GEN_AI_API_KEY: z.string().optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -46,3 +66,12 @@ if (!parsed.success) {
 }
 
 export const env = parsed.success ? parsed.data : EnvSchema.parse({});
+
+// Production guardrails (warn on insecure defaults)
+if (parsed.success && parsed.data.NODE_ENV === 'production') {
+  const cors = parsed.data.CORS_ORIGIN || '*';
+  if (cors.includes('*')) {
+    // eslint-disable-next-line no-console
+    console.warn('[env] CORS_ORIGIN is "*" in production. Set specific origins for better security.');
+  }
+}

@@ -137,7 +137,7 @@ interface PestDetectionAPI {
 
 ### **2. Weather Monitoring**
 **Instead of weather stations:**
-- **Hyper-Local Weather APIs**: OpenWeatherMap with Kerala-specific coordinates
+- **Hyper-Local Weather APIs**: Open-Meteo with Kerala-specific coordinates
 - **Government Data Integration**: IMD (India Meteorological Department) API
 - **Community Weather Reports**: Farmer-contributed local observations
 - **Satellite Data**: Remote sensing weather information

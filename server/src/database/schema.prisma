@@ -17,6 +17,13 @@ model User {
   language_preference  String    @default("en")
   created_at           DateTime  @default(now())
 
+  // Location fields
+  pin_code             String?   @db.VarChar(6)
+  city                 String?
+  state                String?
+  constituency         String?
+  gram_panchayat       String?
+
   // OTP fields
   otp_code             String?
   otp_expires_at       DateTime?
@@ -24,6 +31,11 @@ model User {
   // Relations
   farms                Farm[]
   alerts               Alert[]
+
+  @@index([pin_code])
+  @@index([city])
+  @@index([state])
+  @@index([constituency])
 }
 
 model Farm {
@@ -73,12 +85,23 @@ model AdvisoryRule {
 }
 
 model Alert {
-  id          Int      @id @default(autoincrement())
-  user_id     Int
-  alert_type  String
-  content_key String
-  is_read     Boolean  @default(false)
-  created_at  DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  alert_type   String
+  content_key  String
+  content_text String?
+  is_read      Boolean  @default(false)
+  created_at   DateTime @default(now())
 
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  username       String?  @unique
+  name           String?
+  password_hash  String
+  role           String   @default("admin")
+  created_at     DateTime @default(now())
 }

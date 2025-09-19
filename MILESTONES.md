@@ -124,7 +124,7 @@ This document breaks down the Krishi Mitra development into logical, sequential 
 **Duration:** 2-3 days | **Priority:** Critical - Core Intelligence
 
 ### Primary Features:
-- OpenWeatherMap API integration for Kerala
+- Open-Meteo API integration for Kerala
 - Rule-based advisory engine implementation
 - Weather alerts and recommendations
 - Basic chatbot interface with structured queries
@@ -132,7 +132,7 @@ This document breaks down the Krishi Mitra development into logical, sequential 
 ### Files to Create/Modify:
 
 **Weather System:**
-- `server/src/services/WeatherService.ts` - OpenWeatherMap integration
+- `server/src/services/WeatherService.ts` - Open-Meteo integration
 - `server/src/api/controllers/WeatherController.ts` - Weather data handling
 - `server/src/api/routes/weather.ts` - Weather endpoints
 - `server/src/models/Alert.ts` - Alert model definition

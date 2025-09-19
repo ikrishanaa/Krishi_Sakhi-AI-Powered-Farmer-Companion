@@ -1,0 +1,5 @@
+# Data.gov.in Pincode API (leave empty if not configured yet)
+DATA_GOV_API_KEY=579b464db66ec23bdd0000018514a2c840d24ad65ae1de2f410d2cad
+DATA_GOV_PINCODE_RESOURCE_ID=5c2f62fe-5afa-4119-a499-fec9d604d5bd
+DATA_GOV_BASE_URL=https://www.data.gov.in/resource/
+579b464db66ec23bdd0000018514a2c840d24ad65ae1de2f410d2cad

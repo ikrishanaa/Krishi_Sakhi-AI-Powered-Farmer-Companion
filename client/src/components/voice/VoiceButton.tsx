@@ -1,0 +1,66 @@
+"use client";
+
+import { useEffect, useRef, useState } from 'react';
+import { Mic, Square } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+
+function getRecognition(): any | null {
+  // @ts-ignore
+  const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!SR) return null;
+  // @ts-ignore
+  const rec: any = new SR();
+  rec.lang = navigator?.language || 'en-US';
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  return rec;
+}
+
+export default function VoiceButton({ onTranscript, className, title }: { onTranscript: (t: string) => void; className?: string; title?: string }) {
+  const { t } = useI18n();
+  const [supported, setSupported] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const recRef = useRef<any | null>(null);
+
+  useEffect(() => {
+    recRef.current = getRecognition();
+    setSupported(!!recRef.current);
+  }, []);
+
+  const start = () => {
+    if (!recRef.current) return;
+    try {
+      recRef.current.onresult = (e: any) => {
+        const text = e.results?.[0]?.[0]?.transcript || '';
+        if (text) onTranscript(text);
+      };
+      recRef.current.onend = () => setRecording(false);
+      recRef.current.onerror = () => setRecording(false);
+      setRecording(true);
+      recRef.current.start();
+    } catch {
+      setRecording(false);
+    }
+  };
+
+  const stop = () => {
+    try { recRef.current?.stop(); } catch {}
+    setRecording(false);
+  };
+
+  if (!supported) {
+    return (
+      <button type="button" className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed ${className || ''}`} title={title || t('voice_not_supported') || 'Voice not supported'}>
+        <Mic className="w-4 h-4 mr-1" /> {t('voice') || 'Voice'}
+      </button>
+    );
+  }
+
+  return (
+    <button type="button" onClick={recording ? stop : start} className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:border-brand ${className || ''}`} title={title || (recording ? (t('stop') || 'Stop') : (t('voice') || 'Voice'))}>
+      {recording ? <Square className="w-4 h-4 mr-1 text-red-600" /> : <Mic className="w-4 h-4 mr-1" />}
+      {recording ? (t('stop') || 'Stop') : (t('voice') || 'Voice')}
+    </button>
+  );
+}
