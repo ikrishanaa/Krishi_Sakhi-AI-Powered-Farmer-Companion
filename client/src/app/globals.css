@@ -3,9 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --brand: #16a34a;
+  --background: #FFFFFF;
+  --foreground: #212121;
+  --brand: #2E7D32;
+  --secondary: #1565C0;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #FAFAFA;
+  --brand: #66BB6A;
+  --card-bg: #1E1E1E;
 }
 
 html, body {

@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { requestOtp, login } from '@/services/authService';
 import { TOKEN_KEY } from '@/services/api';
 import { useI18n } from '@/lib/i18n';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
+import Label from '@/components/ui/label';
+import FormField from '@/components/ui/form-field';
 
 export default function LoginPage() {
   const { t } = useI18n();
@@ -29,10 +33,10 @@ export default function LoginPage() {
     setError(null);
     try {
       await requestOtp(phoneNumber);
-      setMessage('OTP sent. Enter the code you received (or use 000000 in demo mode).');
+      setMessage(t('otp_sent_note') || 'OTP sent. Enter the code you received (or use 000000 in demo mode).');
       setStep('otp');
     } catch (e: any) {
-      setError(e.message || 'Failed to request OTP');
+      setError(e.message || (t('failed_request_otp') || 'Failed to request OTP'));
     } finally {
       setLoading(false);
     }
@@ -43,10 +47,11 @@ export default function LoginPage() {
     setError(null);
     try {
       await login(phoneNumber, otp);
-      setMessage('Logged in successfully.');
+      try { localStorage.setItem('km_role', 'user'); } catch {}
+      setMessage(t('logged_in_success') || 'Logged in successfully.');
       window.location.href = '/dashboard';
     } catch (e: any) {
-      setError(e.message || 'Failed to login');
+      setError(e.message || (t('failed_login') || 'Failed to login'));
     } finally {
       setLoading(false);
     }
@@ -54,57 +59,55 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold">{t('login') || 'Login'}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('login') || 'Login'}</h1>
 
       {step === 'phone' && (
         <div className="space-y-3">
-          <label className="block text-sm font-medium">Phone Number</label>
-          <input
-            data-testid="phone-input"
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="+919876543210"
-            className="w-full rounded-md border px-3 py-2"
-          />
-          <button
+          <FormField label={t('phone_number') || 'Phone Number'} hint="+919876543210">
+            <Input
+              data-testid="phone-input"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="+919876543210"
+            />
+          </FormField>
+          <Button
             data-testid="send-otp-button"
             onClick={onRequestOtp}
             disabled={loading || !phoneNumber}
-            className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50"
           >
-            {loading ? '…' : (t('send_otp_button') || 'Send OTP')}
-          </button>
+            {loading ? (t('loading') || '…') : (t('send_otp_button') || 'Send OTP')}
+          </Button>
         </div>
       )}
 
       {step === 'otp' && (
         <div className="space-y-3">
-          <label className="block text-sm font-medium">{t('enter_otp') || 'Enter OTP'}</label>
-          <input
-            data-testid="otp-input"
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="000000"
-            className="w-full rounded-md border px-3 py-2"
-          />
-          <button
+          <FormField label={t('enter_otp') || 'Enter OTP'} hint={t('demo_mode_note') || 'Demo Mode: Use OTP 000000 after requesting.'}>
+            <Input
+              data-testid="otp-input"
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="000000"
+            />
+          </FormField>
+          <Button
             data-testid="verify-button"
             onClick={onLogin}
             disabled={loading || otp.length < 4}
-            className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50"
           >
-            {loading ? '…' : (t('verify_login_button') || 'Verify & Login')}
-          </button>
+            {loading ? (t('loading') || '…') : (t('verify_login_button') || 'Verify & Login')}
+          </Button>
         </div>
       )}
 
-      {message && <p className="text-green-700">{message}</p>}
-      {error && <p data-testid="error-message" className="text-red-600">{error}</p>}
+      {message && <p className="text-green-700" aria-live="polite">{message}</p>}
+      {error && <p data-testid="error-message" className="text-red-600" aria-live="assertive">{error}</p>}
 
       <div className="text-sm text-gray-600">
-        <p>Demo Mode: Use OTP 000000 after requesting.</p>
+        <p>{t('demo_mode_note') || 'Demo Mode: Use OTP 000000 after requesting.'}</p>
       </div>
     </div>
   );

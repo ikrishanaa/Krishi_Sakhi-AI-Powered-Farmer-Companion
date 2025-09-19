@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import QRCode from 'react-qr-code';
+import Button from '@/components/ui/button';
 
 export default function QRPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,21 +48,21 @@ export default function QRPage() {
   };
 
   if (error) return <div className="max-w-md mx-auto"><p className="text-red-600">{error}</p></div>;
-  if (!data) return <div className="max-w-md mx-auto">Loading…</div>;
+  if (!data) return <div className="max-w-md mx-auto">{t('loading') || 'Loading…'}</div>;
 
   const text = JSON.stringify(data);
 
   return (
     <div className="max-w-md mx-auto space-y-4">
-      <h1 className="text-2xl font-semibold">Farmer QR ID</h1>
+      <h1 className="text-2xl font-semibold">{t('farmer_qr_id') || 'Farmer QR ID'}</h1>
       <div className="rounded-md border p-4 bg-white flex items-center justify-center">
         <QRCode id="km-qr" value={text} size={192} />
       </div>
       <div className="space-x-2">
-        <button onClick={onDownload} className="rounded-md border px-3 py-1 hover:border-brand">Download QR</button>
-        <a href="/dashboard" className="rounded-md bg-brand px-3 py-1 text-white">Back to Dashboard</a>
+        <Button onClick={onDownload} variant="outline" size="sm">{t('download_qr') || 'Download QR'}</Button>
+        <Button href="/dashboard" size="sm">{t('back_to_dashboard') || 'Back to Dashboard'}</Button>
       </div>
-      <div className="text-xs text-gray-500">This QR contains a minimal public summary (no full phone number). For demo only; backend resolver not implemented.</div>
+      <div className="text-xs text-gray-500">{t('qr_tip') || 'This QR contains a minimal public summary (no full phone number). For demo only; backend resolver not implemented.'}</div>
     </div>
   );
 }

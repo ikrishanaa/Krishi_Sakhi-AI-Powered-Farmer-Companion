@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { fetchStates, fetchCities, fetchConstituencies } from '@/services/locationService';
+import { useI18n } from '@/lib/i18n';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
+import Label from '@/components/ui/label';
 
 export default function UserSubmissionPage() {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [state, setState] = useState('');
@@ -64,11 +70,11 @@ export default function UserSubmissionPage() {
       });
       if (!res.ok) throw new Error(await res.text());
       setOk(true);
-      setToast('Location Saved!');
+      setToast(t('location_saved') || 'Location Saved!');
       setTimeout(() => setToast(null), 2000);
       setName(''); setPhone(''); setConstituency(''); setGp('');
     } catch (e: any) {
-      setError(e.message || 'Failed to submit');
+      setError(e.message || (t('failed_to_submit') || 'Failed to submit'));
     } finally {
       setLoading(false);
     }
@@ -81,53 +87,53 @@ export default function UserSubmissionPage() {
           {toast}
         </div>
       )}
-      <h1 className="text-2xl font-semibold">Submit Your Details</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('submit_details') || 'Submit Your Details'}</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium">Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border px-3 py-2" />
+          <Label>{t('name') || 'Name'}</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div>
-          <label className="block text-sm font-medium">Phone Number</label>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" className="w-full rounded-md border px-3 py-2" />
+          <Label>{t('phone_number') || 'Phone Number'}</Label>
+          <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
         </div>
         <div>
-          <label className="block text-sm font-medium">State</label>
-          <select value={state} onChange={(e) => setState(e.target.value)} className="w-full rounded-md border px-3 py-2">
-            <option value="">Select State</option>
+          <Label>{t('state') || 'State'}</Label>
+          <Select value={state} onChange={(e) => setState((e.target as HTMLSelectElement).value)}>
+            <option value="">{t('select_state') || 'Select State'}</option>
             {states.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium">City</label>
-          <select value={city} onChange={(e) => setCity(e.target.value)} className="w-full rounded-md border px-3 py-2">
-            <option value="">Select City</option>
+          <Label>{t('city') || 'City'}</Label>
+          <Select value={city} onChange={(e) => setCity((e.target as HTMLSelectElement).value)}>
+            <option value="">{t('select_city') || 'Select City'}</option>
             {cities.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium">Constituency</label>
-          <select value={constituency} onChange={(e) => setConstituency(e.target.value)} className="w-full rounded-md border px-3 py-2" disabled={!state || !city}>
-            <option value="">Select Constituency</option>
+          <Label>{t('constituency') || 'Constituency'}</Label>
+          <Select value={constituency} onChange={(e) => setConstituency((e.target as HTMLSelectElement).value)} disabled={!state || !city}>
+            <option value="">{t('select_constituency') || 'Select Constituency'}</option>
             {constituencies.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium">Gram Panchayat</label>
-          <input value={gp} onChange={(e) => setGp(e.target.value)} className="w-full rounded-md border px-3 py-2" />
+          <Label>{t('gram_panchayat') || 'Gram Panchayat'}</Label>
+          <Input value={gp} onChange={(e) => setGp(e.target.value)} />
         </div>
       </div>
-      <button onClick={submit} disabled={loading || !name || !phone} className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50">
-        {loading ? 'Submitting…' : 'Submit'}
-      </button>
-      {ok && <p className="text-green-700">Submitted successfully.</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      <Button onClick={submit} disabled={loading || !name || !phone}>
+        {loading ? (t('submitting') || 'Submitting…') : (t('submit') || 'Submit')}
+      </Button>
+      {ok && <p className="text-green-700" aria-live="polite">{t('submitted_success') || 'Submitted successfully.'}</p>}
+      {error && <p className="text-red-600" aria-live="assertive">{error}</p>}
     </div>
   );
 }

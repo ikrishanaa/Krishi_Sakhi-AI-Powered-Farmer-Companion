@@ -8,7 +8,13 @@ import VoiceButton from '@/components/voice/VoiceButton';
 import { useSpeak } from '@/lib/tts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Select from '@/components/ui/select';
+import Button from '@/components/ui/button';
+import Label from '@/components/ui/label';
+import IconButton from '@/components/ui/icon-button';
+import { Volume2 } from 'lucide-react';
 import { Cloud, AlertTriangle, Clock, CalendarDays } from 'lucide-react';
+import CardHeaderTitle from '@/components/ui/card-header-title';
 
 function useGeolocation() {
   const [pos, setPos] = useState<{ lat?: number; lon?: number }>({});
@@ -108,38 +114,46 @@ export default function WeatherPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold">{t('weather')} & {t('advisories')}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t('weather')} & {t('advisories')}</h1>
       <p className="text-gray-600 text-sm">{t('complete_profile_weather')}</p>
 
       {!canGeo && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3 items-end">
           <div>
-            <label className="block text-sm font-medium">State</label>
-            <select value={state} onChange={(e) => setState(e.target.value)} className="w-full rounded-md border px-3 py-2">
+            <Label>State</Label>
+            <Select value={state} onChange={(e) => setState((e.target as HTMLSelectElement).value)}>
               <option value="">Select State</option>
               {states.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium">City</label>
-            <select value={city} onChange={(e) => setCity(e.target.value)} className="w-full rounded-md border px-3 py-2">
+            <Label>City</Label>
+            <Select value={city} onChange={(e) => setCity((e.target as HTMLSelectElement).value)}>
               <option value="">Select City</option>
               {cities.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="rounded-md bg-brand px-4 py-2 text-white">{t('weather')}</button>
-            <VoiceButton onTranscript={async () => { await load(); setTimeout(() => { const lines = advisories.map((a) => a.text || a); if (lines.length) speakLines(lines); }, 150); }} title={t('voice') || 'Voice'} />
+            <Button onClick={load}>{t('weather')}</Button>
+            <VoiceButton onTranscript={async () => { await load(); setTimeout(() => { const lines = advisories.map((a) => a.text); if (lines.length) speakLines(lines); }, 150); }} title={t('voice') || 'Voice'} />
           </div>
         </div>
       )}
 
-      {loading && <p>Loading…</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      {loading && (
+        <div className="space-y-3" role="status" aria-live="polite">
+          <div className="rounded-md border p-4">
+            <div className="h-3 w-24 animate-pulse bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-64 animate-pulse bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-56 animate-pulse bg-gray-200 rounded" />
+          </div>
+        </div>
+      )}
+      {error && <p className="text-red-600" aria-live="assertive">{error}</p>}
 
       {data && (
         <div className="space-y-4">
@@ -147,10 +161,12 @@ export default function WeatherPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  <AlertTriangle className="w-5 h-5 text-amber-600" aria-hidden="true" />
                   <CardTitle>Advisories</CardTitle>
                 </div>
-                <button onClick={() => { const lines = advisories.map((a) => a.text); if (lines.length) speakLines(lines as string[]); }} className="text-sm rounded-md border px-3 py-1 hover:border-brand">{t('speak') || 'Speak'}</button>
+                <IconButton aria-label={t('speak') || 'Speak'} title={t('speak') || 'Speak'} onClick={() => { const lines = advisories.map((a) => a.text); if (lines.length) speakLines(lines); }}>
+                  <Volume2 className="w-4 h-4" aria-hidden="true" />
+                </IconButton>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-800">
@@ -166,31 +182,25 @@ export default function WeatherPage() {
           )}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-emerald-700" />
-                <CardTitle>Current</CardTitle>
-              </div>
+              <CardHeaderTitle icon={<Cloud className="w-5 h-5 text-emerald-700" aria-hidden="true" />} title="Current" />
             </CardHeader>
             <CardContent>
               <div className="text-sm text-gray-700">Location: {formatNumber(data.lat, 2)}, {formatNumber(data.lon, 2)} ({data.timezone || '—'})</div>
               <div className="text-sm text-gray-700">Temp: {formatNumber(data.current?.temp)}° | Humidity: {formatNumber(data.current?.humidity)}% | Wind: {formatNumber(data.current?.wind_speed)} m/s</div>
               <div className="text-sm text-gray-700">Conditions: {data.current?.weather?.[0]?.description || '—'}</div>
               <div className="mt-2">
-                <button onClick={() => { const parts = [
+                <Button onClick={() => { const parts = [
                   `Temperature ${formatNumber(data.current?.temp)} degrees`,
                   `Humidity ${formatNumber(data.current?.humidity)} percent`,
                   `Wind ${formatNumber(data.current?.wind_speed)} meters per second`,
                   advisories.length ? `${advisories.length} advisories available` : ''
-                ].filter(Boolean) as string[]; speak(parts.join('. ')); }} className="text-sm rounded-md border px-3 py-1 hover:border-brand" title={t('speak') || 'Speak'}>{t('speak') || 'Speak'}</button>
+                ].filter(Boolean) as string[]; speak(parts.join('. ')); }} variant="outline" size="sm" title={t('speak') || 'Speak'}>{t('speak') || 'Speak'}</Button>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-emerald-700" />
-                <CardTitle>Next 24 hours</CardTitle>
-              </div>
+              <CardHeaderTitle icon={<Clock className="w-5 h-5 text-emerald-700" aria-hidden="true" />} title="Next 24 hours" />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -206,10 +216,7 @@ export default function WeatherPage() {
           </Card>
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-emerald-700" />
-                <CardTitle>Next 3 days</CardTitle>
-              </div>
+              <CardHeaderTitle icon={<CalendarDays className="w-5 h-5 text-emerald-700" aria-hidden="true" />} title="Next 3 days" />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">

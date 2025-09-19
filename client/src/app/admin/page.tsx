@@ -6,8 +6,13 @@ import { clearAuthToken, TOKEN_KEY } from '@/services/api';
 import { fetchStates, fetchCities, fetchConstituencies } from '@/services/locationService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart3, Megaphone, Map } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import Button from '@/components/ui/button';
+import EmptyState from '@/components/ui/empty-state';
+import CardHeaderTitle from '@/components/ui/card-header-title';
 
 export default function AdminDashboardPage() {
+  const { t } = useI18n();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [issues, setIssues] = useState<WeeklyIssue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,15 +94,15 @@ export default function AdminDashboardPage() {
     window.location.href = '/admin/login';
   };
 
-  if (loading) return <div className="max-w-4xl mx-auto">Loading dashboard…</div>;
+  if (loading) return <div className="max-w-4xl mx-auto">{t('loading_dashboard') || 'Loading dashboard…'}</div>;
   
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('admin_dashboard') || 'Admin Dashboard'}</h1>
         <div className="flex items-center gap-3">
-          <a href="/admin/geo" className="text-sm text-gray-700 hover:text-brand inline-flex items-center gap-1"><Map className="w-4 h-4" /> Geo Analytics</a>
-          <button onClick={onLogout} className="text-sm text-gray-700 hover:text-brand">Logout</button>
+          <Button href="/admin/geo" variant="outline" size="sm" className="inline-flex items-center gap-1"><Map className="w-4 h-4" /> {t('geo_analytics') || 'Geo Analytics'}</Button>
+          <Button onClick={onLogout} variant="outline" size="sm">{t('logout') || 'Logout'}</Button>
         </div>
       </div>
 
@@ -107,19 +112,19 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardContent>
-              <p className="text-sm text-gray-600">Registered Farmers</p>
+              <p className="text-sm text-gray-600">{t('registered_farmers') || 'Registered Farmers'}</p>
               <p className="text-2xl font-semibold">{stats.users}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <p className="text-sm text-gray-600">Farms</p>
+              <p className="text-sm text-gray-600">{t('farms') || 'Farms'}</p>
               <p className="text-2xl font-semibold">{stats.farms}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <p className="text-sm text-gray-600">Active Crop Cycles</p>
+              <p className="text-sm text-gray-600">{t('active_crop_cycles') || 'Active Crop Cycles'}</p>
               <p className="text-2xl font-semibold">{stats.cycles}</p>
             </CardContent>
           </Card>
@@ -128,11 +133,11 @@ export default function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-emerald-700" /><CardTitle>Weekly Issues (last 7 days)</CardTitle></div>
+          <CardHeaderTitle icon={<BarChart3 className="w-5 h-5 text-emerald-700" />} title={t('weekly_issues_last7') || 'Weekly Issues (last 7 days)'} />
         </CardHeader>
         <CardContent>
           {issues.length === 0 ? (
-            <p className="text-sm text-gray-600">No recent issues logged.</p>
+            <EmptyState title={t('no_recent_issues') || 'No recent issues logged.'} icon={<BarChart3 className="w-4 h-4 text-emerald-700" />} />
           ) : (
             <ul className="list-disc pl-6 text-sm text-gray-700">
               {issues.map((i, idx) => (
@@ -145,43 +150,45 @@ export default function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2"><Megaphone className="w-5 h-5 text-emerald-700" /><CardTitle>Broadcast Advisory</CardTitle></div>
+          <CardHeaderTitle icon={<Megaphone className="w-5 h-5 text-emerald-700" />} title={t('broadcast_advisory') || 'Broadcast Advisory'} />
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600">Send a short advisory. Optionally target by location.</p>
+          <p className="text-sm text-gray-600">{t('send_short_advisory_note') || 'Send a short advisory. Optionally target by location.'}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium">State</label>
+              <label className="block text-sm font-medium">{t('state') || 'State'}</label>
               <select value={bState} onChange={(e) => setBState(e.target.value)} className="w-full rounded-md border px-3 py-2">
-                <option value="">All</option>
+                <option value="">{t('all') || 'All'}</option>
                 {states.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium">City</label>
+              <label className="block text-sm font-medium">{t('city') || 'City'}</label>
               <select value={bCity} onChange={(e) => setBCity(e.target.value)} className="w-full rounded-md border px-3 py-2">
-                <option value="">All</option>
+                <option value="">{t('all') || 'All'}</option>
                 {cities.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium">Constituency</label>
+              <label className="block text-sm font-medium">{t('constituency') || 'Constituency'}</label>
               <select value={bConstituency} onChange={(e) => setBConstituency(e.target.value)} className="w-full rounded-md border px-3 py-2">
-                <option value="">All</option>
+                <option value="">{t('all') || 'All'}</option>
                 {constituencies.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
           </div>
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full rounded-md border px-3 py-2" rows={3} placeholder="e.g., Heavy rain expected in next 24h. Avoid spraying." />
-          <button onClick={onBroadcast} disabled={!message.trim()} className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50">Send Broadcast</button>
+          <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="w-full rounded-md border px-3 py-2" rows={3} placeholder={t('advisory_placeholder') || 'e.g., Heavy rain expected in next 24h. Avoid spraying.'} />
+          <div className="mt-2">
+            <Button onClick={onBroadcast} disabled={!message.trim()}>{t('send_broadcast') || 'Send Broadcast'}</Button>
+          </div>
           {deliveries !== null && (
-            <p className="text-green-700 text-sm">Delivered to {deliveries} users.</p>
+            <p className="text-green-700 text-sm">{(t('delivered_to') || 'Delivered to')} {deliveries} {(t('users') || 'users')}.</p>
           )}
         </CardContent>
       </Card>

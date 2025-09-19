@@ -97,8 +97,8 @@ export default function PestDetectionPage() {
         <div className="text-sm text-gray-600">
           {t('location')}: {coords.lat?.toFixed(4) || '—'}, {coords.lon?.toFixed(4) || '—'}
         </div>
-        <button disabled={loading || !file} className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50">
-          {loading ? 'Analyzing…' : (t('analyze_button') || 'Analyze Image')}
+          <button disabled={loading || !file} className="rounded-md bg-brand px-4 py-2 text-white disabled:opacity-50">
+          {loading ? (t('analyzing') || 'Analyzing…') : (t('analyze_button') || 'Analyze Image')}
         </button>
       </form>
 
@@ -122,7 +122,7 @@ export default function PestDetectionPage() {
           )}
           {result.likely_causes && result.likely_causes.length > 0 && (
             <div>
-              <p className="font-medium">Likely Causes</p>
+              <p className="font-medium">{t('likely_causes') || 'Likely Causes'}</p>
               <ul className="list-disc pl-6 text-sm text-gray-700">
                 {result.likely_causes.map((c, idx) => (
                   <li key={idx}>{c}</li>
@@ -132,7 +132,7 @@ export default function PestDetectionPage() {
           )}
           {result.recommended_actions && result.recommended_actions.length > 0 && (
             <div>
-              <p className="font-medium">Recommended Actions</p>
+              <p className="font-medium">{t('recommended_actions') || 'Recommended Actions'}</p>
               <ul className="list-disc pl-6 text-sm text-gray-700">
                 {result.recommended_actions.map((a, idx) => (
                   <li key={idx}>{a}</li>

@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { TOKEN_KEY, clearAuthToken } from '@/services/api';
 import { supportedLocales, useI18n } from '@/lib/i18n';
 import { useDataSaver } from '@/lib/dataSaver';
-import { Gauge } from 'lucide-react';
+import { useTheme } from '@/lib/theme';
+import { Bell, Globe, Sun, Moon, MoreVertical } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 function LangMenu({ locale, setLocale }: { locale: string; setLocale: (l: any) => void }) {
   const [active, setActive] = useState<number>(() => Math.max(0, supportedLocales.findIndex(l => l.code === locale as any)));
@@ -22,13 +24,13 @@ function LangMenu({ locale, setLocale }: { locale: string; setLocale: (l: any) =
   }, [active, setActive, setLocale]);
 
   return (
-    <div ref={containerRef} className="absolute right-0 mt-2 bg-white border rounded shadow text-sm min-w-[160px] z-50 py-1" role="menu">
+    <div ref={containerRef} className="absolute right-0 mt-2 bg-white dark:bg-[#1E1E1E] border dark:border-gray-700 rounded shadow text-sm min-w-[160px] z-50 py-1 text-gray-900 dark:text-gray-100" role="menu">
       {supportedLocales.map((opt, idx) => (
         <button
           key={opt.code}
           onMouseEnter={() => setActive(idx)}
           onClick={() => setLocale(opt.code as any)}
-          className={`block w-full text-left px-3 py-1.5 hover:bg-gray-50 ${opt.code === locale ? 'text-brand font-medium' : ''} ${idx === active ? 'bg-gray-50' : ''}`}
+          className={`block w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#222] ${opt.code === locale ? 'text-brand dark:text-brand-light font-medium' : ''} ${idx === active ? 'bg-gray-50 dark:bg-[#222]' : ''}`}
           role="menuitem"
         >
           {opt.label}
@@ -40,8 +42,11 @@ function LangMenu({ locale, setLocale }: { locale: string; setLocale: (l: any) =
 
 export default function Header() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
   const { locale, setLocale, t } = useI18n();
   const { enabled: dataSaver, setEnabled: setDataSaver } = useDataSaver();
+  const { mode, toggle } = useTheme();
+  const pathname = usePathname() || '/';
 
   // Language menu UX (click to open/close, close on outside click or Escape)
   const [langOpen, setLangOpen] = useState(false);
@@ -66,6 +71,7 @@ export default function Header() {
     try {
       const t = localStorage.getItem(TOKEN_KEY);
       setLoggedIn(!!t);
+      setRole(localStorage.getItem('km_role'));
     } catch {}
   }, []);
 
@@ -76,51 +82,78 @@ export default function Header() {
 
   const currentLabel = supportedLocales.find((s) => s.code === locale)?.label || (t('language') || 'Language');
 
+  // More/settings popover for Data Saver
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => { if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
-      <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
-        <div className="text-lg font-semibold text-brand"><a href="/">{t('app_title') || 'Krishi Mitra'}</a></div>
-        <nav className="flex items-center gap-4 text-sm text-gray-700">
-          <a href="/weather" className="hover:text-brand">{t('weather') || 'Weather'}</a>
-          <a href="/pest-detection" className="hover:text-brand">{t('pest_check') || 'Pest Check'}</a>
-          <a href="/chat" className="hover:text-brand">{t('ask_question') || 'Ask Question'}</a>
-          <a href="/market-trends" className="hover:text-brand">{t('market_trends') || 'Market Trends'}</a>
-          {loggedIn && <a href="/alerts" className="hover:text-brand">{t('my_alerts') || 'Alerts'}</a>}
-        </nav>
-        <div className="flex items-center gap-2">
-          {/* Language dropdown (hover OR click) */}
-          <div
-            ref={langRef}
-            className="relative"
-          >
-            <button
-              onClick={() => setLangOpen((o) => !o)}
-              className="inline-flex items-center gap-1 text-sm text-gray-700 hover:text-brand"
-              aria-haspopup="menu"
-              aria-expanded={langOpen}
-            >
-              {currentLabel}
-              <span className={`transition-transform ${langOpen ? 'rotate-180' : ''}`}>▾</span>
+    <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-[#121212] backdrop-blur">
+<div className="mx-auto max-w-3xl px-4 py-1 flex items-center justify-between">
+        <div className="text-lg font-semibold text-brand dark:text-brand-light"><a href="/">Krishi Mitra</a></div>
+        <div className="flex items-center gap-3">
+          {/* Language dropdown */}
+          <div ref={langRef} className="relative">
+            <button onClick={() => setLangOpen((o) => !o)} className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={langOpen} title={t('language') || 'Language'}>
+              <Globe className="w-4 h-4" aria-hidden="true" /> {currentLabel}
             </button>
-            {langOpen && (
-              <LangMenu locale={locale} setLocale={(l) => { setLocale(l); setLangOpen(false); }} />
+            {langOpen && (<LangMenu locale={locale} setLocale={(l) => { setLocale(l); setLangOpen(false); }} />)}
+          </div>
+
+          {/* Alerts bell */}
+          {loggedIn && (
+            <a
+              href="/alerts"
+              className={`relative hover:text-brand dark:hover:text-brand-light ${pathname === '/alerts' ? 'text-brand dark:text-brand-light' : 'text-gray-700 dark:text-gray-200'}`}
+              title={t('my_alerts') || 'Alerts'}
+              aria-label={t('my_alerts') || 'Alerts'}
+            >
+              <Bell className="w-5 h-5" aria-hidden="true" />
+              {/* notification dot */}
+              <span className="absolute -top-1 -right-1 block h-2 w-2 rounded-full bg-red-500"></span>
+            </a>
+          )}
+
+          {/* Theme toggle */}
+          <button onClick={toggle} className="text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-label="Toggle theme" title="Toggle theme">
+            {mode === 'dark' ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
+          </button>
+
+          {/* More menu for Data Saver */}
+          <div ref={moreRef} className="relative">
+            <button onClick={() => setMoreOpen((o) => !o)} className="text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={moreOpen} title="More">
+              <MoreVertical className="w-5 h-5" aria-hidden="true" />
+            </button>
+            {moreOpen && (
+              <div className="absolute right-0 mt-2 bg-white dark:bg-[#1E1E1E] border dark:border-gray-700 rounded shadow text-sm min-w-[180px] z-50 py-1 text-gray-800 dark:text-gray-100">
+                <a href="/settings" className="block px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#222]">Settings</a>
+                <button onClick={() => setDataSaver(!dataSaver)} className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#222]">
+                  {dataSaver ? (t('data_saver_on') || 'Data Saver: ON') : (t('data_saver_off') || 'Data Saver: OFF')}
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Data Saver toggle */}
-          <button onClick={() => setDataSaver(!dataSaver)} className={`inline-flex items-center gap-1 text-sm ${dataSaver ? 'text-emerald-700' : 'text-gray-700'} hover:text-brand`} title={dataSaver ? 'Data Saver: ON' : 'Data Saver: OFF'}>
-            <Gauge className="w-4 h-4" /> {dataSaver ? 'Saver On' : 'Saver Off'}
-          </button>
-
+          {/* Auth controls */}
           {!loggedIn ? (
             <>
-              <a href="/admin/login" className="text-sm text-gray-700 hover:text-brand">{t('for_officers') || 'For Officers'}</a>
-              <a href="/auth/login" className="rounded-md bg-brand px-3 py-1.5 text-white hover:bg-brand-dark text-sm">{t('get_started') || 'Get Started'}</a>
+              {/* Farmer login */}
+              <a href="/auth/login" className={`rounded-md px-3 py-1.5 text-white text-sm ${pathname.startsWith('/auth/login') ? 'bg-brand-dark' : 'bg-brand hover:bg-brand-dark'}`}>Login / Signup</a>
+              {/* Admin login */}
+              <a href="/admin/login" className={`text-sm hover:text-brand dark:hover:text-brand-light ${pathname.startsWith('/admin/login') ? 'text-brand dark:text-brand-light font-medium' : 'text-gray-700 dark:text-gray-200'}`}>Admin Login</a>
             </>
           ) : (
             <>
-              <a href="/dashboard" className="text-sm text-gray-700 hover:text-brand">{t('dashboard') || 'Dashboard'}</a>
-              <button onClick={onLogout} className="text-sm text-gray-700 hover:text-brand">{t('logout') || 'Logout'}</button>
+              {role === 'admin' ? (
+                <a href="/admin" className={`text-sm hover:text-brand dark:hover:text-brand-light ${pathname.startsWith('/admin') ? 'text-brand dark:text-brand-light font-medium' : 'text-gray-700 dark:text-gray-200'}`}>Admin Dashboard</a>
+              ) : (
+                <a href="/dashboard" className={`text-sm hover:text-brand dark:hover:text-brand-light ${pathname.startsWith('/dashboard') ? 'text-brand dark:text-brand-light font-medium' : 'text-gray-700 dark:text-gray-200'}`}>Dashboard</a>
+              )}
+              <button onClick={onLogout} className="text-sm text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light">{t('logout') || 'Logout'}</button>
             </>
           )}
         </div>
