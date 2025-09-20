@@ -54,6 +54,10 @@ const corsOptions: CorsOptions = {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes('*') && env.NODE_ENV !== 'production') return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any ngrok tunnel during local/dev testing
+    if (env.NODE_ENV !== 'production' && typeof origin === 'string' && /\.ngrok(-free)?\.app$/i.test(new URL(origin).host)) {
+      return callback(null, true);
+    }
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,

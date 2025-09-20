@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
       try {
         const [s, w] = await Promise.all([getAdminStats(), getWeeklyIssues()]);
         setStats(s);
-        setIssues(w.issues);
+        setIssues(Array.isArray(w?.issues) ? w.issues : []);
         // Load broadcast filter options
         const st = await fetchStates();
         setStates(st);
@@ -136,10 +136,10 @@ export default function AdminDashboardPage() {
           <CardHeaderTitle icon={<BarChart3 className="w-5 h-5 text-emerald-700" />} title={t('weekly_issues_last7') || 'Weekly Issues (last 7 days)'} />
         </CardHeader>
         <CardContent>
-          {issues.length === 0 ? (
-            <EmptyState title={t('no_recent_issues') || 'No recent issues logged.'} icon={<BarChart3 className="w-4 h-4 text-emerald-700" />} />
+          {(issues?.length ?? 0) === 0 ? (
+<EmptyState title={t('no_recent_issues') || 'No recent issues logged.'} icon={<BarChart3 className="w-4 h-4 text-emerald-700" />} />
           ) : (
-            <ul className="list-disc pl-6 text-sm text-gray-700">
+<ul className="list-disc pl-6 text-sm text-gray-700">
               {issues.map((i, idx) => (
                 <li key={idx} className="flex justify-between"><span>{i.type}</span><span className="font-medium">{i.count}</span></li>
               ))}

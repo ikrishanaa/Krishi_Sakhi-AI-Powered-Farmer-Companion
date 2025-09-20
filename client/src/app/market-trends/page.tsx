@@ -54,9 +54,10 @@ export default function MarketTrendsPage() {
     setError(null);
     try {
       const data = await fetchTrends({ crop, state: state || undefined, city: city || undefined });
-      setSeries(data.points);
+      setSeries(Array.isArray(data?.points) ? data.points : []);
     } catch (e: any) {
       setError(e.message || 'Failed to load market trends');
+      setSeries([]);
     } finally {
       setLoading(false);
     }
@@ -65,14 +66,15 @@ export default function MarketTrendsPage() {
   useEffect(() => { load(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const chartData = useMemo(() => {
+    const pts = Array.isArray(series) ? series : [];
     // Thin datasets under Data Saver: cap to ~30 points
-    const stride = dataSaver ? Math.max(1, Math.ceil(series.length / 30)) : 1;
+    const stride = dataSaver ? Math.max(1, Math.ceil((pts.length || 0) / 30)) : 1;
     const idxs: number[] = [];
-    for (let i = 0; i < series.length; i += stride) idxs.push(i);
-    const labels = idxs.map((i) => formatDate(series[i].date));
-    const avg = idxs.map((i) => series[i].avgPrice);
-    const min = idxs.map((i) => series[i].minPrice);
-    const max = idxs.map((i) => series[i].maxPrice);
+    for (let i = 0; i < pts.length; i += stride) idxs.push(i);
+    const labels = idxs.map((i) => formatDate(pts[i].date));
+    const avg = idxs.map((i) => pts[i].avgPrice);
+    const min = idxs.map((i) => pts[i].minPrice);
+    const max = idxs.map((i) => pts[i].maxPrice);
     return {
       labels,
       datasets: [
