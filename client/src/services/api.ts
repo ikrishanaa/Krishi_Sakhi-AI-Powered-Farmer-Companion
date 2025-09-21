@@ -35,10 +35,18 @@ export type ApiProblem = {
 // Determine API base URL. Prefer NEXT_PUBLIC_API_BASE to bypass Next.js rewrites if needed.
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
 
-// Create Axios instance targeting API_BASE
+// Primary Axios (can point to ngrok) and a same-origin fallback client (/api -> Next dev rewrite)
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
-  timeout: 10000,
+  timeout: 12000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const fallbackApi: AxiosInstance = axios.create({
+  baseURL: '/api',
+  timeout: 12000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -57,9 +65,29 @@ api.interceptors.request.use((config) => {
 // Normalize errors
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    // Try a one-shot fallback to same-origin /api when primary base (e.g., ngrok) is blocked by CORS/network
+    const config: any = error.config || {};
+    const status = error.response?.status || 0;
+    const isNetwork = error.code === 'ERR_NETWORK' || status === 0;
+    const canFallback = typeof window !== 'undefined' && api.defaults.baseURL !== '/api' && !config.__retriedWithFallback;
+
+    if (isNetwork && canFallback) {
+      try {
+        const retryCfg = { ...config, baseURL: undefined };
+        retryCfg.__retriedWithFallback = true;
+        const method = (retryCfg.method || 'get').toLowerCase();
+        const url = retryCfg.url as string;
+        // send via fallback client
+        const resp = await (fallbackApi as any)[method](url, retryCfg.data, { params: retryCfg.params, headers: retryCfg.headers });
+        return resp;
+      } catch (e) {
+        // continue to normalize below
+      }
+    }
+
     const problem: ApiProblem = {
-      status: error.response?.status || 0,
+      status,
       message:
         (error.response?.data as any)?.error ||
         error.message ||

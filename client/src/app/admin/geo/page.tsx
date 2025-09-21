@@ -70,6 +70,13 @@ export default function AdminGeoAnalyticsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto reload on filter change (debounced)
+  useEffect(() => {
+    const id = setTimeout(() => { load(); }, 250);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, city, constituency]);
+
   const barState = useMemo(() => {
     const arr = (data?.byState || []).slice().sort((a: any, b: any) => b.count - a.count).slice(0, topN);
     return {

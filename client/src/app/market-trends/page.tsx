@@ -65,6 +65,13 @@ export default function MarketTrendsPage() {
 
   useEffect(() => { load(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
+  // Auto-reload when filters change (debounced)
+  useEffect(() => {
+    const id = setTimeout(() => { load(); }, 200);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, city, crop]);
+
   const chartData = useMemo(() => {
     const pts = Array.isArray(series) ? series : [];
     // Thin datasets under Data Saver: cap to ~30 points
