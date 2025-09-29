@@ -114,3 +114,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+
+# /client/.env.local
+client/.env.local
