@@ -1,25 +1,66 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TOKEN_KEY } from '@/services/api';
 import { useFormat } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Button from '@/components/ui/button';
-import CardHeaderTitle from '@/components/ui/card-header-title';
-import { Cloud, Bell, Rocket, Star, History, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { api } from '@/services/api';
+import { Cloud, Bell, Home, Leaf, LineChart, Bug, MessageSquare, BookOpen, ShoppingCart, Users, AlertCircle, User as UserIcon, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+
+// Full-bleed helper so we can extend beyond main's max width
+function FullBleed({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen">
+      {children}
+    </div>
+  );
+}
+
+function Carousel() {
+  const slides = ['/images/banner.jpg','/images/banner1.jpg','/images/banner2.jpg'];
+  const [idx, setIdx] = useState(0);
+  const timerRef = useRef<number | null>(null);
+  useEffect(() => {
+    timerRef.current = window.setInterval(() => setIdx((i) => (i + 1) % slides.length), 1800);
+    return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
+  }, [slides.length]);
+  const prev = () => setIdx((i) => (i - 1 + slides.length) % slides.length);
+  const next = () => setIdx((i) => (i + 1) % slides.length);
+  return (
+    <div className="relative h-[32vw] max-h-[420px] min-h-[180px] overflow-hidden rounded-2xl shadow">
+      {slides.map((src, i) => (
+        <div key={i} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === idx ? 'opacity-100' : 'opacity-0'}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="Banner" className="w-full h-full object-cover" />
+        </div>
+      ))}
+      <button aria-label="Previous" onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 shadow transition-colors">
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button aria-label="Next" onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 shadow transition-colors">
+        <ChevronRight className="w-6 h-6" />
+      </button>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { t } = useI18n();
+  const { formatNumber, formatDate } = useFormat();
+
+  // State
   const [profile, setProfile] = useState<any | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [weather, setWeather] = useState<any | null>(null);
-  const { formatNumber, formatDate } = useFormat();
   const [wError, setWError] = useState<string | null>(null);
   const [aError, setAError] = useState<string | null>(null);
-  const [watchlist, setWatchlist] = useState<string[]>([]);
-  const [watchPrices, setWatchPrices] = useState<Record<string, { curr: number; prev: number }>>({});
   const [timeline, setTimeline] = useState<{ text: string }[]>([]);
+  const [sideOpen, setSideOpen] = useState(false);
+
+  // Market data for major crops
+  const crops = ['Rice','Coconut','Banana','Pepper'];
+  const [market, setMarket] = useState<Record<string, { curr?: number; prev?: number }>>({});
 
   // Guard: require auth
   useEffect(() => {
@@ -28,36 +69,31 @@ export default function DashboardPage() {
     if (!t) window.location.href = '/auth/login';
   }, []);
 
+  // Profile
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/users/me');
-        if (res.ok) {
-          const j = await res.json();
-          setProfile(j.user);
-        } else {
-          setProfile(null);
-        }
-      } catch {
+        const { data } = await api.get('/users/me');
+        if (data?.user) setProfile(data.user);
+      } catch (e) {
         setProfile(null);
       }
     })();
   }, []);
 
+  // Alerts
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/alerts/me');
-        if (!res.ok) throw new Error();
-        const j = await res.json();
-        setAlerts(Array.isArray(j.alerts) ? j.alerts.slice(0, 5) : []);
+        const { data } = await api.get('/alerts/me');
+        setAlerts(Array.isArray(data?.alerts) ? data.alerts.slice(0, 5) : []);
       } catch {
         setAError('Could not load alerts');
       }
     })();
   }, []);
 
-  // Smart weather: geolocation -> profile -> prompt
+  // Weather
   useEffect(() => {
     let done = false;
     const loadByCoords = async (lat: number, lon: number) => {
@@ -81,8 +117,6 @@ export default function DashboardPage() {
         setWError('Could not load weather');
       }
     };
-
-    // Try geolocation first
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (p) => { if (!done) { done = true; loadByCoords(p.coords.latitude, p.coords.longitude); } },
@@ -92,50 +126,32 @@ export default function DashboardPage() {
     } else {
       loadByProfile(profile?.state, profile?.city);
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.state, profile?.city]);
 
-  // Load watchlist from localStorage (keep max 2 for compact UI)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('km_watchlist') || '[]';
-      const list = JSON.parse(raw);
-      if (Array.isArray(list)) setWatchlist(list.slice(0, 2));
-    } catch {}
-  }, []);
-
-  const toggleWatch = (crop: string) => {
-    setWatchlist((prev) => {
-      const next = prev.includes(crop) ? prev.filter((c) => c !== crop) : [...prev, crop].slice(0, 2);
-      try { localStorage.setItem('km_watchlist', JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
-
-  // Fetch latest price for watched crops (curr/prev) using market trends
+  // Market prices for major crops
   useEffect(() => {
     (async () => {
       try {
         const st = profile?.state || 'KERALA';
         const ct = profile?.city || 'KANNUR';
-        const entries = await Promise.all(watchlist.map(async (crop) => {
+        const entries = await Promise.all(crops.map(async (crop) => {
           const res = await fetch(`/api/market/trends?crop=${encodeURIComponent(crop)}&state=${encodeURIComponent(st)}&city=${encodeURIComponent(ct)}`);
-          if (!res.ok) return [crop, { curr: NaN, prev: NaN }] as const;
+          if (!res.ok) return [crop, { curr: undefined, prev: undefined }] as const;
           const j = await res.json();
           const pts = Array.isArray(j.points) ? j.points : [];
           const last = pts[pts.length - 1];
           const prev = pts[pts.length - 2];
-          return [crop, { curr: last?.avgPrice ?? NaN, prev: prev?.avgPrice ?? NaN }] as const;
+          return [crop, { curr: last?.avgPrice, prev: prev?.avgPrice }] as const;
         }));
-        const next: Record<string, { curr: number; prev: number }> = {};
+        const next: Record<string, { curr?: number; prev?: number }> = {};
         for (const [c, p] of entries) next[c] = p;
-        setWatchPrices(next);
+        setMarket(next);
       } catch {}
     })();
-  }, [watchlist, profile?.state, profile?.city]);
+  }, [profile?.state, profile?.city]);
 
-  // Advisory timeline (demo: fetch recent advisories for area)
+  // Advisory list
   useEffect(() => {
     (async () => {
       try {
@@ -159,167 +175,287 @@ export default function DashboardPage() {
     return '—';
   }, [weather, profile, formatNumber]);
 
+  const welcomeName = useMemo(() => {
+    const n = (profile?.name as string | undefined)?.trim?.();
+    if (n) return n;
+    const pn = (profile?.phone_number as string | undefined)?.trim?.();
+    if (pn) return pn;
+    return '';
+  }, [profile?.name, profile?.phone_number]);
+
+  // Checklist tasks (local state)
+  const [tasks, setTasks] = useState([
+    { id: 'irrigation', label: 'Irrigation for Field A', done: false },
+    { id: 'fertilizer', label: 'Apply urea (recommended dose)', done: false },
+    { id: 'weeding', label: 'Weeding near bunds', done: true },
+    { id: 'pest', label: 'Inspect for pests', done: false },
+  ]);
+  const progress = useMemo(() => Math.round((tasks.filter(t => t.done).length / tasks.length) * 100), [tasks]);
+
+  const toggleTask = (id: string) => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t));
+
+  // Reminders (pill bar)
+  const reminders = useMemo(() => [
+    'Soil moisture check',
+    'Next irrigation in 2 days',
+    'Pest scout: Brown planthopper',
+    'Fertilizer reminder: NPK',
+  ], []);
+
+  // Sidebar menu items
+  const menu = [
+    { href: '/dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
+    { href: '/farms', label: 'Farms', icon: <Leaf className="w-5 h-5" /> },
+    { href: '/alerts', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
+    { href: '/market-trends', label: 'Mandi', icon: <LineChart className="w-5 h-5" /> },
+    { href: '/pest-decision', label: 'Pest Control', icon: <Bug className="w-5 h-5" /> },
+    { href: '/chat', label: 'AI Chat', icon: <MessageSquare className="w-5 h-5" /> },
+    { href: '/schemes', label: 'Schemes', icon: <BookOpen className="w-5 h-5" /> },
+    { href: '/buy-sell', label: 'Buy/Sell', icon: <ShoppingCart className="w-5 h-5" /> },
+    { href: '/forum', label: 'Forum', icon: <Users className="w-5 h-5" /> },
+    { href: '/grievances', label: 'Grievance Redressal', icon: <AlertCircle className="w-5 h-5" /> },
+    { href: '/submit', label: 'My Profile', icon: <UserIcon className="w-5 h-5" /> },
+  ];
+
+  const CardWrap = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+    <div className={`group rounded-2xl border bg-white/95 shadow-sm hover:shadow-2xl transition-all duration-300 ${className}`}>
+      {children}
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('dashboard_title') || 'Farmer Dashboard'}</h1>
+    <FullBleed>
+      <div className="grid grid-cols-12 gap-4 px-4 py-6 bg-gradient-to-b from-emerald-50 to-white">
+        {/* Mobile top row: hamburger */}
+        <div className="col-span-12 md:hidden flex items-center justify-between">
+          <button onClick={() => setSideOpen(true)} className="rounded-md border bg-white px-3 py-1.5 shadow-sm">
+            ☰ Menu
+          </button>
+          <div className="text-lg font-semibold">{t('dashboard_title') || 'Farmer Dashboard'}</div>
+        </div>
 
-      {/* Profile status ribbon */}
-      <Card>
-        <CardContent className="text-sm flex items-center justify-between">
-          <div>
-            <span className="text-gray-600">{t('profile_location') || 'Profile location'}:</span>{' '}
-            <span className="font-medium">
-              {profile?.state && profile?.city ? (
-                <>
-                  {profile.state} / {profile.city}
-                  {profile?.constituency ? ` / ${profile.constituency}` : ''}
-                </>
-              ) : (
-                t('not_set') || 'Not set'
-              )}
-            </span>
+        {/* Sidebar */}
+        <aside className="hidden md:block col-span-3 xl:col-span-2 md:sticky md:top-0 self-start">
+          <div className="h-screen">
+            <div className="border-r bg-white/95 shadow-sm h-full">
+              <nav className="p-3 h-full overflow-y-auto">
+                <ul className="space-y-1">
+                  {menu.map((m) => (
+                    <li key={m.href}>
+                      <a href={m.href} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors ${typeof window !== 'undefined' && window.location.pathname.startsWith(m.href) ? 'bg-emerald-100 text-emerald-900' : 'text-gray-700'}`}>
+                        <span className="text-emerald-700">{m.icon}</span>
+                        <span>{m.label}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
           </div>
-          <a href="/submit" className="text-brand hover:underline">{t('update_profile') || 'Update Profile'}</a>
-        </CardContent>
-      </Card>
+        </aside>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Weather widget */}
-        <Card>
-          <CardHeader>
-            <CardHeaderTitle icon={<Cloud className="w-5 h-5 text-emerald-700" />} title={t('weather') || 'Weather'} />
-          </CardHeader>
-          <CardContent>
-            {!weather && !wError && (!profile?.state || !profile?.city) && (
-              <div className="text-sm text-gray-700">{t('complete_profile_weather') || 'Complete your profile for local weather.'} <a className="text-brand hover:underline" href="/submit">{t('complete_now') || 'Complete now'}</a></div>
-            )}
-            {(!weather && !wError && profile?.state && profile?.city) && (
-              <div className="space-y-2" role="status" aria-live="polite">
-                <div className="h-4 w-36 animate-pulse bg-gray-200 rounded" />
-                <div className="h-4 w-64 animate-pulse bg-gray-200 rounded" />
-                <div className="h-4 w-48 animate-pulse bg-gray-200 rounded" />
+        {/* Mobile slide-over sidebar */}
+        {sideOpen && (
+          <div className="md:hidden fixed inset-0 z-40">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setSideOpen(false)} />
+            <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-lg font-semibold">Menu</div>
+                <button className="rounded-md border px-2 py-1" onClick={() => setSideOpen(false)}>Close</button>
               </div>
-            )}
-            {wError && <p className="text-sm text-red-600">{wError}</p>}
-            {weather && (
-              <div className="text-sm text-gray-700 space-y-1">
-                <div>{t('location') || 'Location'}: {locationText}</div>
-                <div>{t('temp') || 'Temp'}: {formatNumber(weather.current?.temp)}° | {t('humidity') || 'Humidity'}: {formatNumber(weather.current?.humidity)}% | {t('wind') || 'Wind'}: {formatNumber(weather.current?.wind_speed)}</div>
-                <div>{t('conditions') || 'Conditions'}: {weather.current?.weather?.[0]?.description || '—'}</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <nav>
+                <ul className="space-y-1">
+                  {menu.map((m) => (
+                    <li key={m.href}>
+                      <a href={m.href} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors" onClick={() => setSideOpen(false)}>
+                        <span className="text-emerald-700">{m.icon}</span>
+                        <span>{m.label}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        )}
 
-        {/* Alerts widget */}
-        <Card>
-          <CardHeader>
-            <CardHeaderTitle icon={<Bell className="w-5 h-5 text-amber-700" />} title={t('my_alerts') || 'My Alerts'} />
-          </CardHeader>
-          <CardContent>
-            {aError && <p className="text-sm text-red-600">{aError}</p>}
-            {!aError && alerts.length === 0 && (
-              <div className="space-y-2" role="status" aria-live="polite">
-                <div className="h-3 w-24 animate-pulse bg-gray-200 rounded" />
-                <div className="h-4 w-64 animate-pulse bg-gray-200 rounded" />
+        {/* Main content */}
+        <main className="col-span-12 md:col-span-9 xl:col-span-10 space-y-6">
+          {/* Carousel */}
+          <Carousel />
+
+          {/* Welcome + Reminders */}
+          <CardWrap className="p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-semibold">{welcomeName ? `Hello, ${welcomeName}!` : 'Hello!'} <span className="font-normal">Welcome back!</span></h2>
+                <div className="text-sm text-gray-600">{t('profile_location') || 'Profile location'}: {locationText}</div>
               </div>
-            )}
-            <div className="space-y-2">
-              {alerts.map((a, i) => (
-                <div key={i} className="rounded border p-2 text-sm">
-                  <div className="text-xs text-gray-500">{formatDate(a.created_at)}</div>
-                  <div className="font-medium">{a.content_text || a.content_key || a.alert_type}</div>
-                </div>
+              <div className="text-right">
+                <a href="/submit" className="text-sm text-emerald-700 hover:underline">{t('update_profile') || 'Update Profile'}</a>
+              </div>
+            </div>
+            {/* Reminders pill bar */}
+            <div className="mt-4 flex gap-2 overflow-x-auto">
+              {reminders.map((r, i) => (
+                <div key={i} className="shrink-0 rounded-full border bg-emerald-50 text-emerald-900 px-3 py-1.5 text-xs shadow-sm hover:shadow transition-all">{r}</div>
               ))}
             </div>
-            <div className="mt-2 text-right">
-              <a href="/alerts" className="text-sm text-brand hover:underline">{t('alerts_view_all') || 'View all'}</a>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+          </CardWrap>
 
-      {/* Watchlist (frontend stub) */}
-      <Card>
-        <CardHeader>
-          <CardHeaderTitle icon={<Star className="w-5 h-5 text-emerald-700" />} title={`${t('market_watchlist') || 'Market Watchlist'} (Stub)`} />
-        </CardHeader>
-        <CardContent>
-          <div className="text-xs text-gray-500 mb-2">{t('frontend_stub_note') || 'Frontend-only; stores locally; backend not implemented'}</div>
-          <div className="flex flex-wrap gap-2">
-            {['Rice','Coconut','Banana','Pepper'].map((c) => (
-              <button key={c} onClick={() => toggleWatch(c)} className={`rounded border px-3 py-1.5 ${watchlist.includes(c) ? 'border-brand text-brand' : 'hover:border-brand'}`}>{c}</button>
-            ))}
+          {/* Top Info Widgets */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Weather */}
+            <CardWrap className="p-5">
+              <div className="flex items-start gap-3 mb-2">
+                <Cloud className="w-6 h-6 text-emerald-700" />
+                <div className="text-lg font-semibold">{t('weather') || 'Weather'}</div>
+              </div>
+              {!weather && !wError && (!profile?.state || !profile?.city) && (
+                <div className="text-sm text-gray-700">{t('complete_profile_weather') || 'Complete your profile for local weather.'} <a className="text-emerald-700 hover:underline" href="/submit">{t('complete_now') || 'Complete now'}</a></div>
+              )}
+              {(!weather && !wError && profile?.state && profile?.city) && (
+                <div className="space-y-2" role="status" aria-live="polite">
+                  <div className="h-4 w-36 animate-pulse bg-gray-200 rounded" />
+                  <div className="h-4 w-64 animate-pulse bg-gray-200 rounded" />
+                  <div className="h-4 w-48 animate-pulse bg-gray-200 rounded" />
+                </div>
+              )}
+              {wError && <p className="text-sm text-red-600">{wError}</p>}
+              {weather && (
+                <div className="text-sm text-gray-700 space-y-1">
+                  <div>{t('location') || 'Location'}: {locationText}</div>
+                  <div>{t('temp') || 'Temp'}: {formatNumber(weather.current?.temp)}° | {t('humidity') || 'Humidity'}: {formatNumber(weather.current?.humidity)}% | {t('wind') || 'Wind'}: {formatNumber(weather.current?.wind_speed)}</div>
+                  <div>{t('conditions') || 'Conditions'}: {weather.current?.weather?.[0]?.description || '—'}</div>
+                </div>
+              )}
+            </CardWrap>
+
+            {/* Advisory */}
+            <CardWrap className="p-5">
+              <div className="flex items-start gap-3 mb-2">
+                <Bell className="w-6 h-6 text-amber-700" />
+                <div className="text-lg font-semibold">{t('advisory') || 'Advisory'}</div>
+              </div>
+              {timeline.length === 0 ? (
+                <div className="text-sm text-gray-600">{t('no_items_yet') || 'No items yet.'}</div>
+              ) : (
+                <div className="text-sm text-gray-800">{timeline[0].text}</div>
+              )}
+              <div className="mt-3 text-right">
+                <a href="/chat" className="text-sm text-emerald-700 hover:underline">{t('ask_question') || 'Ask a question'}</a>
+              </div>
+            </CardWrap>
+
+            {/* Schemes */}
+            <CardWrap className="p-5 bg-emerald-50">
+              <div className="flex items-start gap-3 mb-2">
+                <div className="w-6 h-6 rounded-full bg-emerald-600" />
+                <div className="text-lg font-semibold">{t('schemes') || 'Schemes'}</div>
+              </div>
+              <div className="text-sm text-gray-700">Latest government schemes for you.</div>
+              <div className="mt-3 text-right">
+                <a href="/schemes" className="text-sm text-emerald-700 hover:underline">{t('view_all') || 'View all'}</a>
+              </div>
+            </CardWrap>
           </div>
-          {watchlist.length === 0 ? (
-            <div className="mt-3 rounded-md border p-3 text-sm text-gray-600">
-              <div className="flex items-center gap-2"><Star className="w-4 h-4 text-emerald-700" /><span>{t('add_watchlist_hint') || 'Add crops to your watchlist to see prices here.'}</span></div>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              {watchlist.map((c) => {
-                const info = watchPrices[c] || { curr: NaN, prev: NaN };
-                const curr = info.curr; const prev = info.prev;
-                const delta = Number.isFinite(curr) && Number.isFinite(prev) && prev > 0 ? ((curr - prev) / prev) * 100 : NaN;
-                return (
-                  <div key={c} className="rounded border p-2 flex items-center justify-between">
-                    <span>{c}</span>
-                    <span className="text-gray-700 flex items-center gap-2">
-                      {Number.isFinite(curr) ? `${Math.round(curr)} ₹` : '—'}
-                      {Number.isFinite(delta) ? (
-                        <span className="inline-flex items-center gap-1 text-xs">
-                          {delta > 0 ? <ArrowUpRight className="w-4 h-4 text-emerald-700" /> : delta < 0 ? <ArrowDownRight className="w-4 h-4 text-red-700" /> : <Minus className="w-4 h-4 text-gray-600" />}
-                          <span className={delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-700' : 'text-gray-600'}>
-                            {`${Math.abs(Math.round(delta))}%`}
-                          </span>
-                        </span>
-                      ) : null}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Advisory timeline (demo) */}
-      <Card>
-        <CardHeader>
-          <CardHeaderTitle icon={<History className="w-5 h-5 text-emerald-700" />} title={t('advisory_timeline') || 'Advisory Timeline'} />
-        </CardHeader>
-        <CardContent>
-          <div className="text-xs text-gray-500 mb-2">{t('recent_advisories_demo') || 'Recent advisories for your area (demo)'}</div>
-          {timeline.length === 0 ? (
-            <div className="rounded-md border p-3 text-sm text-gray-600">
-              <div className="flex items-center gap-2"><History className="w-4 h-4 text-emerald-700" /><span>{t('no_items_yet') || 'No items yet.'}</span></div>
+          {/* Market section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Market Prices */}
+            <CardWrap className="p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <LineChart className="w-6 h-6 text-emerald-700" />
+                <div className="text-lg font-semibold">{t('market_prices') || 'Market Prices'}</div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-600">
+                      <th className="py-2 pr-4">{t('crop') || 'Crop'}</th>
+                      <th className="py-2 pr-4">{t('price') || 'Price'}</th>
+                      <th className="py-2">{t('change') || 'Change'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {crops.map((c) => {
+                      const info = market[c] || {};
+                      const curr = info.curr;
+                      const prev = info.prev;
+                      const delta = (typeof curr === 'number' && typeof prev === 'number' && prev > 0) ? ((curr - prev) / prev) * 100 : undefined;
+                      return (
+                        <tr key={c} className="border-t">
+                          <td className="py-2 pr-4">{c}</td>
+                          <td className="py-2 pr-4">{typeof curr === 'number' ? `${Math.round(curr)} ₹` : '—'}</td>
+                          <td className="py-2">
+                            {typeof delta === 'number' ? (
+                              <span className="inline-flex items-center gap-1 text-xs">
+                                {delta > 0 ? <ArrowUpRight className="w-4 h-4 text-emerald-700" /> : delta < 0 ? <ArrowDownRight className="w-4 h-4 text-red-700" /> : <Minus className="w-4 h-4 text-gray-600" />}
+                                <span className={delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-700' : 'text-gray-600'}>{`${Math.abs(Math.round(delta))}%`}</span>
+                              </span>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardWrap>
+
+            {/* Market Advisory */}
+            <CardWrap className="p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <LineChart className="w-6 h-6 text-emerald-700" />
+                <div className="text-lg font-semibold">{t('market_advisory') || 'Market Advisory'}</div>
+              </div>
+              <ul className="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                {crops.map((c) => {
+                  const info = market[c] || {};
+                  const curr = info.curr; const prev = info.prev;
+                  const delta = (typeof curr === 'number' && typeof prev === 'number' && prev > 0) ? ((curr - prev) / prev) * 100 : undefined;
+                  let tip = `${c}: `;
+                  if (typeof delta === 'number') {
+                    tip += delta > 0 ? 'Uptrend. Consider selling small lots.' : delta < 0 ? 'Downtrend. Consider holding.' : 'Stable.';
+                  } else {
+                    tip += 'No recent data.';
+                  }
+                  return <li key={c}>{tip}</li>;
+                })}
+              </ul>
+            </CardWrap>
+          </div>
+
+          {/* Tasks & Checklist */}
+          <CardWrap className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-lg font-semibold">{t('tasks_checklist') || 'Tasks & Checklist'}</div>
+              <div className="text-xs text-gray-600">{progress}% {t('complete') || 'complete'}</div>
             </div>
-          ) : (
-            <ul className="space-y-2 text-sm text-gray-700">
-              {timeline.map((t, i) => (
-                <li key={i} className="rounded border p-2">{t.text}</li>
+            <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+              <div className="h-full bg-emerald-600" style={{ width: `${progress}%` }} />
+            </div>
+            <ul className="mt-4 space-y-2">
+              {tasks.map((task) => (
+                <li key={task.id} className="rounded-xl border px-3 py-2 flex items-center gap-3 hover:shadow transition-all" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
+                  <input id={`task-${task.id}`} type="checkbox" className="w-4 h-4 rounded border-gray-400 text-emerald-600 focus:ring-emerald-600" checked={task.done} onChange={() => toggleTask(task.id)} />
+                  <label htmlFor={`task-${task.id}`} className={`text-sm ${task.done ? 'line-through text-gray-500' : 'text-gray-800'}`}>{task.label}</label>
+                </li>
               ))}
             </ul>
-          )}
-        </CardContent>
-      </Card>
+          </CardWrap>
 
-      {/* Quick actions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2"><Rocket className="w-5 h-5 text-emerald-700" /><CardTitle>{t('quick_actions') || 'Quick Actions'}</CardTitle></div>
-        </CardHeader>
-        <CardContent>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm">
-            <Button href="/submit" variant="outline" size="sm">{t('update_profile') || 'Update Profile'}</Button>
-            <Button href="/weather" variant="outline" size="sm">{t('open_weather') || 'Open Weather'}</Button>
-            <Button href="/pest-detection" variant="outline" size="sm">{t('pest_check') || 'Pest Check'}</Button>
-            <Button href="/chat" variant="outline" size="sm">{t('ask_question') || 'Ask Question'}</Button>
-            <Button href="/qr" variant="outline" size="sm">{t('qr_id') || 'QR ID'}</Button>
-            <Button href="/feedback" variant="outline" size="sm">{t('feedback') || 'Feedback'}</Button>
+          {/* Extra actions (kept) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Button href="/submit" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('update_profile') || 'Update Profile'}</Button>
+            <Button href="/weather" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('open_weather') || 'Open Weather'}</Button>
+            <Button href="/pest-detection" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('pest_check') || 'Pest Check'}</Button>
+            <Button href="/market-trends" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('market_trends') || 'Market'}</Button>
+            <Button href="/chat" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('ask_question') || 'Ask Question'}</Button>
+            <Button href="/feedback" variant="outline" className="rounded-xl shadow-sm hover:shadow">{t('feedback') || 'Feedback'}</Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </main>
+      </div>
+    </FullBleed>
   );
 }

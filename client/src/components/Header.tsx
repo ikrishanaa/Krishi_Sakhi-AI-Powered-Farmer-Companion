@@ -92,12 +92,12 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-[#121212] backdrop-blur">
-<div className="mx-auto max-w-3xl px-4 py-1 flex items-center justify-between">
-        <div className="text-lg font-semibold text-brand dark:text-brand-light"><a href="/">Krishi Mitra</a></div>
-        <div className="flex items-center gap-3">
+<header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-[#121212] backdrop-blur">
+      <div className="mx-auto w-full max-w-7xl px-4 py-2 flex items-center justify-between">
+        <div className="text-lg font-semibold text-brand dark:text-brand-light"><a href="/">Krishi Sakhi</a></div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
           {/* Language dropdown */}
-          <div ref={langRef} className="relative">
+<div ref={langRef} className="relative hidden sm:block">
             <button onClick={() => setLangOpen((o) => !o)} className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={langOpen} title={t('language') || 'Language'}>
               <Globe className="w-4 h-4" aria-hidden="true" /> {currentLabel}
             </button>
@@ -105,10 +105,10 @@ export default function Header() {
           </div>
 
           {/* Alerts bell */}
-          {loggedIn && (
+{loggedIn && (
             <a
               href="/alerts"
-              className={`relative hover:text-brand dark:hover:text-brand-light ${pathname === '/alerts' ? 'text-brand dark:text-brand-light' : 'text-gray-700 dark:text-gray-200'}`}
+              className={`relative hover:text-brand dark:hover:text-brand-light ${pathname === '/alerts' ? 'text-brand dark:text-brand-light' : 'text-gray-700 dark:text-gray-200'} hidden sm:inline-flex`}
               title={t('my_alerts') || 'Alerts'}
               aria-label={t('my_alerts') || 'Alerts'}
             >
@@ -124,7 +124,7 @@ export default function Header() {
           </button>
 
           {/* More menu for Data Saver */}
-          <div ref={moreRef} className="relative">
+<div ref={moreRef} className="relative hidden md:block">
             <button onClick={() => setMoreOpen((o) => !o)} className="text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={moreOpen} title="More">
               <MoreVertical className="w-5 h-5" aria-hidden="true" />
             </button>
@@ -141,10 +141,14 @@ export default function Header() {
           {/* Auth controls */}
           {!loggedIn ? (
             <>
-              {/* Farmer login */}
-              <a href="/auth/login" className={`rounded-md px-3 py-1.5 text-white text-sm ${pathname.startsWith('/auth/login') ? 'bg-brand-dark' : 'bg-brand hover:bg-brand-dark'}`}>Login / Signup</a>
-              {/* Admin login */}
-              <a href="/admin/login" className={`text-sm hover:text-brand dark:hover:text-brand-light ${pathname.startsWith('/admin/login') ? 'text-brand dark:text-brand-light font-medium' : 'text-gray-700 dark:text-gray-200'}`}>Admin Login</a>
+              {/* Farmer login only on mobile and desktop */}
+<a href="/auth/login" className={`rounded-md px-3 py-1.5 text-white text-sm ${pathname.startsWith('/auth/login') ? 'bg-brand-dark' : 'bg-brand hover:bg-brand-dark'} shrink-0`}>
+                {t('login') || 'Login'}
+              </a>
+              {/* Admin login hidden on small screens; available on desktop header */}
+              <a href="/admin/login" className={`hidden md:inline text-sm hover:text-brand dark:hover:text-brand-light ${pathname.startsWith('/admin/login') ? 'text-brand dark:text-brand-light font-medium' : 'text-gray-700 dark:text-gray-200'}`}>
+                Admin Login
+              </a>
             </>
           ) : (
             <>

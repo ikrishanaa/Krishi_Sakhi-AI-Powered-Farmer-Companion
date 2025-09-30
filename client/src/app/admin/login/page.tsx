@@ -42,57 +42,61 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('admin_login') || 'Admin Login'}</h1>
-      <p className="text-gray-600 text-sm">{t('gov_email_note') || 'Use your official government email (e.g., @kerala.gov.in, @punjab.gov.in, @up.gov.in)'}</p>
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F0FDF4]">
+      <div className="mx-auto max-w-md min-h-[80vh] flex items-center justify-center py-12 md:py-16">
+        <div className="w-full rounded-2xl bg-white shadow-xl border p-6 md:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight mb-1">{t('admin_login') || 'Admin Login'}</h1>
+          <p className="text-gray-600 text-sm mb-4">{t('gov_email_note') || 'Use your official government email (e.g., @kerala.gov.in, @punjab.gov.in, @up.gov.in)'}</p>
 
-      <div className="space-y-3">
-        <Label>{t('email') || 'Email'}</Label>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="officer@kerala.gov.in"
-        />
-      </div>
+          <div className="space-y-3">
+            <Label>{t('email') || 'Email'}</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="officer@kerala.gov.in"
+            />
+          </div>
 
-      <div className="flex gap-3 items-center text-sm">
-        <label className="flex items-center gap-2">
-          <input type="radio" name="mode" checked={mode==='password'} onChange={() => setMode('password')} /> {t('password') || 'Password'}
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="radio" name="mode" checked={mode==='otp'} onChange={() => setMode('otp')} /> {t('otp') || 'OTP'}
-        </label>
-      </div>
+          <div className="flex gap-3 items-center text-sm mt-4">
+            <label className="flex items-center gap-2">
+              <input type="radio" name="mode" checked={mode==='password'} onChange={() => setMode('password')} /> {t('password') || 'Password'}
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="radio" name="mode" checked={mode==='otp'} onChange={() => setMode('otp')} /> {t('otp') || 'OTP'}
+            </label>
+          </div>
 
-      {mode === 'password' ? (
-        <div className="space-y-3">
-          <Label>{t('password') || 'Password'}</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          {mode === 'password' ? (
+            <div className="space-y-3 mt-3">
+              <Label>{t('password') || 'Password'}</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3 mt-3">
+              <Label>{t('otp') || 'OTP'}</Label>
+              <Input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="000000"
+              />
+              <p className="text-xs text-gray-600">{t('admin_otp_demo_note') || 'For the hackathon demo, the admin OTP is 000000 (configured on backend).'}</p>
+            </div>
+          )}
+
+          <Button className="mt-4" onClick={submit} disabled={loading || !email || (mode==='password' ? !password : !otp)}>
+            {loading ? (t('verifying') || 'Verifying…') : (t('login') || 'Login')}
+          </Button>
+
+          {message && <p className="text-green-700 mt-3" aria-live="polite">{message}</p>}
+          {error && <p className="text-red-600 mt-3" aria-live="assertive">{error}</p>}
         </div>
-      ) : (
-        <div className="space-y-3">
-          <Label>{t('otp') || 'OTP'}</Label>
-          <Input
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="000000"
-          />
-          <p className="text-xs text-gray-600">{t('admin_otp_demo_note') || 'For the hackathon demo, the admin OTP is 000000 (configured on backend).'}</p>
-        </div>
-      )}
-
-      <Button onClick={submit} disabled={loading || !email || (mode==='password' ? !password : !otp)}>
-        {loading ? (t('verifying') || 'Verifying…') : (t('login') || 'Login')}
-      </Button>
-
-      {message && <p className="text-green-700" aria-live="polite">{message}</p>}
-      {error && <p className="text-red-600" aria-live="assertive">{error}</p>}
+      </div>
     </div>
   );
 }

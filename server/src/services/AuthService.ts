@@ -6,6 +6,7 @@ import { prisma } from '../config/database';
 import { env } from '../config/environment';
 import { signToken } from '../config/jwt';
 import { SMSService } from './SMSService';
+import bcrypt from 'bcryptjs';
 
 function generateOtp(): string {
   // 6-digit numeric OTP
@@ -17,6 +18,31 @@ export class AuthService {
 
   constructor() {
     this.sms = new SMSService();
+  }
+
+  async signup(name: string, phoneNumber: string, password: string, email?: string): Promise<{ token: string; user: any }>{
+    // Ensure phone/email uniqueness
+    const exists = await prisma.user.findFirst({ where: { OR: [ { phone_number: phoneNumber }, email ? { email } : undefined ].filter(Boolean) as any } });
+    if (exists) {
+      throw Object.assign(new Error('User already exists'), { status: 409 });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({ data: { name, phone_number: phoneNumber, email, password_hash } });
+    const token = signToken({ sub: String(user.id), phone: user.phone_number });
+    return { token, user };
+  }
+
+  async loginWithPassword({ phoneNumber, email, password }: { phoneNumber?: string; email?: string; password: string }): Promise<{ token: string; user: any }>{
+    const user = await prisma.user.findFirst({ where: { OR: [ phoneNumber ? { phone_number: phoneNumber } : undefined, email ? { email } : undefined ].filter(Boolean) as any } });
+    if (!user || !user.password_hash) {
+      throw Object.assign(new Error('Invalid credentials'), { status: 401 });
+    }
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
+      throw Object.assign(new Error('Invalid credentials'), { status: 401 });
+    }
+    const token = signToken({ sub: String(user.id), phone: user.phone_number });
+    return { token, user };
   }
 
   async requestOtp(phoneNumber: string): Promise<{ success: boolean }>{

@@ -75,7 +75,8 @@ export default function PestDetectionPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
+      <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">{t('analyze_title')}</h1>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -105,7 +106,7 @@ export default function PestDetectionPage() {
       {error && <p className="text-red-600">{error}</p>}
 
       {result && (
-        <div className="rounded-md border p-4 space-y-3">
+        <div className="rounded-2xl bg-white shadow-sm border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{t('result_title') || 'Result'}</h2>
             <button onClick={() => {
@@ -155,6 +156,7 @@ export default function PestDetectionPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

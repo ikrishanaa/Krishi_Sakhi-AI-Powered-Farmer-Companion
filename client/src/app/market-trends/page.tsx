@@ -121,7 +121,8 @@ export default function MarketTrendsPage() {
   // Note: if more aggressive saving needed, we can thin datasets or lower points
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
+      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">{t('market_trends') || 'Market Trends'}</h1>
       <Card>
         <CardHeader>
@@ -194,6 +195,7 @@ export default function MarketTrendsPage() {
       {series.length === 0 && !loading && !error && (
         <EmptyState title={t('no_items_yet') || 'No items yet.'} />
       )}
+      </div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function ChatPage() {
   const [coords, setCoords] = useState<{ lat?: number; lon?: number }>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [answer, setAnswer] = useState<ChatAnswer | null>(null);
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -30,12 +30,13 @@ export default function ChatPage() {
 
   const doAsk = async (q: string) => {
     setError(null);
-    setAnswer(null);
     if (!q.trim()) { setError(t('ask_question')); return; }
+    setMessages((m) => [...m, { role: 'user', text: q }]);
+    setText('');
     setLoading(true);
     try {
       const res = await ask({ text: q, crop: crop || undefined, lat: coords.lat, lon: coords.lon });
-      setAnswer(res);
+      setMessages((m) => [...m, { role: 'assistant', text: res.answer || '' }]);
     } catch (err: any) {
       setError(err.message || 'Query failed');
     } finally {
@@ -64,11 +65,13 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
+      <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
       <Suspense fallback={null}>
         <BootstrapQuery />
       </Suspense>
       <h1 className="text-2xl font-semibold">{t('chat_title') || 'Ask Krishi Mitra'}</h1>
+      <div className="rounded-2xl bg-white shadow-sm border p-4">
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <Label>{t('crop_optional')}</Label>
@@ -86,36 +89,22 @@ export default function ChatPage() {
           <VoiceButton onTranscript={(tx) => setText(tx)} title={t('voice') || 'Voice'} />
         </div>
       </form>
+      </div>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-red-600 px-4">{error}</p>}
 
-      {answer && (
-        <div className="rounded-md border p-4 space-y-3">
-          <h2 className="text-lg font-semibold">{t('result_title') || 'Result'}</h2>
-          <p className="whitespace-pre-wrap">{answer.answer}</p>
-          {answer.facts && answer.facts.length > 0 && (
-            <div>
-              <p className="font-medium">{t('facts') || 'Facts'}</p>
-              <ul className="list-disc pl-6 text-sm text-gray-700">
-                {answer.facts.map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
+      {/* Chat bubbles */}
+      <div className="rounded-2xl bg-white shadow-sm border p-4">
+        <div className="space-y-3">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-900'} px-3 py-2 rounded-2xl max-w-[80%]`}>{m.text}</div>
             </div>
-          )}
-          {answer.caution && answer.caution.length > 0 && (
-            <div>
-              <p className="font-medium">{t('advisories')}</p>
-              <ul className="list-disc pl-6 text-sm text-gray-700">
-                {answer.caution.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="text-xs text-gray-500">{t('model_label') || 'Model'}: {answer.model || 'demo'}</div>
+          ))}
+          {loading && <div className="text-sm text-gray-600">…</div>}
         </div>
-      )}
+      </div>
+      </div>
     </div>
   );
 }

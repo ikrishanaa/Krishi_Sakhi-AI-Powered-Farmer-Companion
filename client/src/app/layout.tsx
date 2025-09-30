@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Krishi Mitra',
+  title: 'Krishi Sakhi',
   description: 'AI-powered personal crop companion for farmers (Kerala focus)',
   manifest: '/manifest.json',
 };
@@ -30,14 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#16a34a" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="min-h-screen bg-white text-[#212121] dark:bg-[#121212] dark:text-[#FAFAFA]">
+      <body className="min-h-screen bg-[#F1F5F9] text-[#212121] dark:bg-[#121212] dark:text-[#FAFAFA]">
         {/* Wrap app in I18nProvider to enable translations */}
         {/* eslint-disable-next-line @next/next/no-head-element */}
         <I18nProvider>
           <ThemeProvider>
             <DataSaverProvider>
               <Header />
-              <main className="mx-auto max-w-3xl px-4 py-6 pb-20">{children}</main>
+<main className="mx-auto max-w-3xl px-4 py-6 pb-6 md:pb-0">{children}</main>
               <FloatingMicFab />
               <BottomNav />
               {/* Register service worker for PWA */}
