@@ -6,7 +6,7 @@ import { useFormat } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import Button from '@/components/ui/button';
 import { api } from '@/services/api';
-import { Cloud, Bell, Home, Leaf, LineChart, Bug, MessageSquare, BookOpen, ShoppingCart, Users, AlertCircle, User as UserIcon, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { Cloud, Bell, Home, Leaf, LineChart, Bug, MessageSquare, BookOpen, ShoppingCart, Users, AlertCircle, User as UserIcon, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Minus, Cpu } from 'lucide-react';
 
 // Full-bleed helper so we can extend beyond main's max width
 function FullBleed({ children }: { children: React.ReactNode }) {
@@ -226,6 +226,7 @@ export default function DashboardPage() {
     { href: '/buy-sell', label: 'Buy/Sell', icon: <ShoppingCart className="w-5 h-5" /> },
     { href: '/forum', label: 'Forum', icon: <Users className="w-5 h-5" /> },
     { href: '/grievances', label: 'Grievance Redressal', icon: <AlertCircle className="w-5 h-5" /> },
+    { href: '/hardware', label: 'Hardware Data', icon: <Cpu className="w-5 h-5" /> },
     { href: '/submit', label: 'My Profile', icon: <UserIcon className="w-5 h-5" /> },
   ];
 

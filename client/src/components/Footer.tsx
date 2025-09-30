@@ -37,15 +37,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* 4. Help & Support (as requested, duplicate section) */}
-          <div>
-            <h3 className="text-base font-semibold mb-3">Help & Support</h3>
-            <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-              <li>Helpline: 1800-000-0000</li>
-              <li><a className="hover:underline" href="https://wa.me/919876543210" target="_blank" rel="noreferrer">WhatsApp / Chatbot</a></li>
-              <li><a className="hover:underline" href="#faqs">FAQs</a></li>
-            </ul>
-          </div>
         </div>
 
         {/* 5. Legal */}
@@ -59,7 +50,7 @@ export default function Footer() {
 
         {/* Bottom strip */}
         <div className="mt-8 border-t pt-4 text-center text-sm text-gray-700 dark:text-gray-300">
-          <div>Powered by AI with support from Kerala Agriculture Department</div>
+          <div>Powered by AI with support from Agriculture Department, Govt. Of India</div>
           <div className="mt-1">------ Team Innov8 -------</div>
         </div>
       </div>

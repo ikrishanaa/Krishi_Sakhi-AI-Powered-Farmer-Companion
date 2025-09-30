@@ -28,15 +28,24 @@ export default function VoiceButton({ onTranscript, className, title }: { onTran
     setSupported(!!recRef.current);
   }, []);
 
+  const handledRef = useRef(false);
+
   const start = () => {
     if (!recRef.current) return;
     try {
+      handledRef.current = false;
       recRef.current.onresult = (e: any) => {
-        const text = e.results?.[0]?.[0]?.transcript || '';
+        if (handledRef.current) return;
+        const res = e?.results?.[e?.resultIndex ?? 0];
+        if (!res || res.isFinal === false) return; // only act on final result
+        const text = (res[0]?.transcript || '').trim();
+        handledRef.current = true;
         if (text) onTranscript(text);
+        // Stop immediately after first final result to prevent duplicate fires on some Android devices
+        try { recRef.current?.stop(); } catch {}
       };
       recRef.current.onend = () => setRecording(false);
-      recRef.current.onerror = () => setRecording(false);
+      recRef.current.onerror = () => { handledRef.current = true; setRecording(false); };
       setRecording(true);
       recRef.current.start();
     } catch {

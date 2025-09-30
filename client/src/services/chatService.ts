@@ -18,23 +18,39 @@ export type ChatAnswer = {
  * Ask an AI question. Backend will call Gemini and return a structured answer.
  */
 export async function ask(query: ChatQuery): Promise<ChatAnswer> {
-  const res = await fetch('/api/chat/query', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Use-LLM': 'gemini',
-    },
-    body: JSON.stringify(query),
-  });
-  if (!res.ok) {
-    let message = `Query failed (${res.status})`;
-    try {
-      const j = await res.json();
-      message = j?.error || message;
-    } catch {
-      try { message = await res.text(); } catch {}
+  // Abort/timeout to avoid stalled requests in some PWA environments
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
+  try {
+    const res = await fetch('/api/chat/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Use-LLM': 'gemini',
+      },
+      body: JSON.stringify(query),
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      let message = `Query failed (${res.status})`;
+      try {
+        const j = await res.json();
+        message = (j as any)?.error || message;
+      } catch {
+        try { message = await res.text(); } catch {}
+      }
+      throw new Error(message);
     }
-    throw new Error(message);
+    return (await res.json()) as ChatAnswer;
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
   }
-  return (await res.json()) as ChatAnswer;
 }

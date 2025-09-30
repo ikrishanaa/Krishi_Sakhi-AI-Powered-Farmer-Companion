@@ -1,231 +1,136 @@
-# Krishi Mitra - Hardware Integration Approach
+# IoT Hardware Integration Roadmap for Krishi Sakhi
 
-## Overview
-This document outlines Krishi Mitra's deliberate **no-hardware approach** and explains the architectural decisions that prioritize software-based solutions over physical device integration.
-
----
-
-## **Design Philosophy: Software-First Agriculture**
-
-### **Core Principle: Accessibility Over Complexity**
-Krishi Mitra is designed as a **pure software solution** that operates entirely through:
-- **Smartphone devices** (farmer's existing mobile phone)
-- **Cloud-based services** (weather APIs, advisory engine)
-- **User input interfaces** (forms, voice, camera)
-
-### **No External Hardware Required**
-The application **intentionally avoids** requiring:
-- ❌ IoT sensors (soil moisture, temperature, humidity)
-- ❌ Weather stations
-- ❌ Automated irrigation systems
-- ❌ GPS tracking devices
-- ❌ Specialized agricultural hardware
-- ❌ Bluetooth/WiFi connected farming equipment
+This document describes how to integrate on-field IoT sensors (soil moisture, temperature, humidity, pH, water level, etc.) with the Krishi Sakhi platform. It covers ingestion patterns, database schema, security, advisory logic, and a minimal rollout plan.
 
 ---
 
-## **Rationale for No-Hardware Approach**
+## 1) Ingestion Patterns (choose one or combine)
 
-### **1. Target User Economics**
-Small and marginal farmers in Kerala (typically <1.2 hectares) face:
-- **Limited Capital**: Cannot afford expensive IoT deployments
-- **ROI Concerns**: Hardware costs exceed potential benefits on small plots
-- **Maintenance Burden**: Lack technical expertise for device upkeep
-- **Replacement Costs**: Vulnerable to damage from weather, animals, theft
+- HTTP Webhook (Gateway → API)
+  - Edge device or gateway POSTs JSON to `/api/iot/ingest`.
+  - Body signed with HMAC (X-Signature) using a per-device secret.
+  - Simple to deploy over HTTPS; works on 2G/4G/5G/Wi‑Fi.
 
-### **2. Deployment Simplicity**
-**Software-only benefits:**
-- **Immediate Access**: No installation, setup, or calibration required
-- **Zero Installation Cost**: No hardware purchase or deployment expenses
-- **Instant Scaling**: Can reach thousands of farmers without physical distribution
-- **Remote Support**: All troubleshooting can be done remotely via app updates
+- MQTT (Broker ↔ Device)
+  - Devices publish to topics like `farms/{farmId}/sensors/{deviceId}/data`.
+  - A small subscriber service consumes the topics and writes to the DB.
+  - Works well for fleets; can be EMQX, HiveMQ, or Mosquitto.
 
-### **3. Kerala-Specific Challenges**
-**Environmental factors:**
-- **High Humidity**: Electronic devices degrade quickly in Kerala's tropical climate
-- **Monsoon Vulnerability**: Heavy rains can damage outdoor sensors
-- **Power Infrastructure**: Rural areas may have unreliable electricity for device charging
-- **Network Coverage**: Sparse cellular coverage makes IoT connectivity unreliable
-
-### **4. Hackathon Feasibility**
-**Development considerations:**
-- **Time Constraints**: Hardware integration requires weeks/months vs. hours/days for software
-- **Complexity Reduction**: Focus development effort on core advisory intelligence
-- **Demo Reliability**: Software demos are more reliable than hardware demonstrations
-- **Scalability**: Software solution can be tested with multiple user scenarios
+- LoRaWAN via TTN/ChirpStack
+  - Use The Things Network/ChirpStack uplink webhooks to our `/api/iot/ttn`.
+  - Decode payloads in the integration; map to our device IDs.
 
 ---
 
-## **Data Collection Strategy Without Hardware**
+## 2) Data Model (Prisma – SensorDevice + SensorReading)
 
-### **1. Farmer-Provided Inputs**
-**User interface collection:**
-- **Farm Location**: GPS coordinates from smartphone
-- **Soil Type**: User selection from Kerala-specific options (Sandy, Clayey, Loamy)
-- **Irrigation Source**: User-selected categories (Rain-fed, Canal, Borewell, Pond)
-- **Crop Information**: Variety, sowing date, expected harvest date
-- **Activity Logging**: Manual input of fertilizer applications, irrigation, pest sightings
+- SensorDevice
+  - Links to `Farm`.
+  - Stores type (soil_moisture, temp, humidity, ph, water_level), unit, connectivity, metadata, and lastSeenAt.
+  - Keeps only a hash of the device API key for security.
 
-### **2. External API Data Sources**
-**Weather Information:**
-```typescript
-// WeatherService integration
-interface WeatherData {
-  temperature: { min: number; max: number };
-  precipitation: { probability: number; amount: number };
-  humidity: number;
-  windSpeed: number;
-  forecast: Array<{
-    date: string;
-    condition: 'sunny' | 'rainy' | 'cloudy';
-    temperature: { min: number; max: number };
-  }>;
-}
+- SensorReading
+  - Time-series values with (deviceId, at, value, unit, quality, raw).
+  - Indexed by (deviceId, at) for fast queries.
+
+Example (schema intent):
+
+- SensorDevice(id, farmId, name, type, unit, connectivity, metadata, apiKeyHash, lastSeenAt, createdAt, updatedAt)
+- SensorReading(id, deviceId, at, value, unit, quality, raw)
+
+---
+
+## 3) HTTP Ingestion Endpoint (sketch)
+
+- Endpoint: `POST /api/iot/ingest`
+- Headers: `Content-Type: application/json`, `X-Signature: <hmac>`
+- Body: `{ device_id, value, unit, at, ... }`
+- Steps:
+  1. Read raw body string.
+  2. Lookup device by device_id; fetch per-device secret.
+  3. Verify HMAC over raw body.
+  4. Insert a SensorReading; update SensorDevice.lastSeenAt.
+  5. Respond `{ ok: true }`.
+
+---
+
+## 4) MQTT Subscriber (sketch)
+
+- Subscribe to `farms/+/sensors/+/data`.
+- For each message: parse JSON → validate → insert SensorReading → update lastSeenAt.
+- Deploy as a small Node service or serverless function.
+
+---
+
+## 5) LoRaWAN (TTN) Webhook (sketch)
+
+- Endpoint: `POST /api/iot/ttn`.
+- Extract `device_id`, `decoded_payload` & timestamp.
+- Map to SensorDevice; create SensorReading.
+
+---
+
+## 6) Device Provisioning & Security
+
+- Admin flow to register SensorDevice and bind to a Farm.
+- Generate device API key (display once; store only hash in DB).
+- Enforce TLS (HTTPS/MQTTS). Rotate keys periodically.
+- Per-device rate limits and input validation (units, ranges).
+
+---
+
+## 7) Product Surfaces & Intelligence
+
+- Dashboard widgets per farm: latest sensor values, last-seen time, sparklines (24–72h).
+- Alerts: threshold rules (e.g., soil_moisture < 20% → “Irrigation advisable”).
+- Chat context: include latest sensor snapshot so AI answers are situational ("Soil moisture is 18% at 09:20—irrigation advisable today").
+
+---
+
+## 8) Performance & Storage
+
+- Index `(deviceId, at)` to speed reads.
+- Optional: TimescaleDB for larger volumes; downsample old data (1-min → 10-min → hourly).
+- Gateways can buffer and batch when offline.
+
+---
+
+## 9) Minimal Working Slice (1–2 days)
+
+1. DB migration: add SensorDevice & SensorReading.
+2. Build `/api/iot/ingest` with HMAC auth.
+3. Admin: Register Sensor (bind to Farm), issue API key (QR code optional).
+4. Ingest from a test ESP32/gateway via HTTP POST.
+5. Dashboard: show latest soil moisture + last seen.
+6. Advisory: trigger low-moisture alert.
+7. Chat: include latest sensor snapshot in the Ask context.
+
+---
+
+## 10) Example Device Payload
+
 ```
-
-**Market Price Data:**
-```typescript
-// Mock market data structure for Kerala crops
-interface MarketData {
-  crop: string;
-  district: string;
-  prices: Array<{
-    date: string;
-    minPrice: number;
-    maxPrice: number;
-    avgPrice: number;
-  }>;
-}
-```
-
-### **3. Image-Based Analysis**
-**Camera-enabled features:**
-- **Pest Detection**: Uses smartphone camera for crop disease identification
-- **Growth Monitoring**: Photo-based crop stage assessment
-- **Soil Visual Assessment**: Color-based soil condition evaluation
-
-**Implementation:**
-```typescript
-// Pest detection through image upload
-interface PestDetectionAPI {
-  endpoint: '/api/predict/pest';
-  method: 'POST';
-  input: {
-    image: File; // Smartphone camera capture
-    cropType: string;
-    location: { lat: number; lng: number };
-  };
-  response: {
-    prediction: string;
-    confidence: number;
-    recommendationKey: string;
-    treatmentAdvice: string;
-  };
+{
+  "device_id": "sensor-soil-kerala-farmA-01",
+  "value": 17.6,
+  "unit": "%",
+  "at": "2025-09-30T10:17:00Z",
+  "battery": 3.72
 }
 ```
 
 ---
 
-## **Alternative Solutions to Hardware-Dependent Features**
+## 11) Why this approach
 
-### **1. Soil Health Assessment**
-**Instead of soil sensors:**
-- **Visual Inspection Guides**: Photo-based soil health assessment tutorials
-- **Soil Health Card Integration**: Government-provided soil test data API integration
-- **Community Data Sharing**: Aggregated soil data from nearby farms
-- **Expert Consultation**: Video call integration with agricultural experts
-
-### **2. Weather Monitoring**
-**Instead of weather stations:**
-- **Hyper-Local Weather APIs**: Open-Meteo with Kerala-specific coordinates
-- **Government Data Integration**: IMD (India Meteorological Department) API
-- **Community Weather Reports**: Farmer-contributed local observations
-- **Satellite Data**: Remote sensing weather information
-
-### **3. Irrigation Management**
-**Instead of automated systems:**
-- **Smart Scheduling**: Weather-based irrigation recommendations
-- **Rainfall Tracking**: Alert system for natural irrigation availability
-- **Crop Water Needs**: Stage-based water requirement calculations
-- **Reminder System**: Timed notifications for manual irrigation
-
-### **4. Pest and Disease Monitoring**
-**Instead of sensor networks:**
-- **Visual Recognition**: AI-powered image analysis using smartphone camera
-- **Symptom Database**: Comprehensive visual guides for pest identification
-- **Community Alerts**: Peer-to-peer pest outbreak warnings
-- **Expert Network**: Direct connection to agricultural extension officers
+- Works with low-power, low-bandwidth field conditions.
+- Pluggable ingestion (HTTP/MQTT/LoRaWAN) with a single normalized data model.
+- Secure-by-design: device keys, HMAC, TLS, rate limits.
+- Directly enhances advisories and chat quality—sensor-aware guidance, not generic tips.
 
 ---
 
-## **Technical Architecture Supporting No-Hardware Design**
-
-### **1. Mobile-First Development**
-```typescript
-// Progressive Web App capabilities
-interface PWAFeatures {
-  offline: boolean; // Works without internet connectivity
-  installable: boolean; // Can be installed on home screen
-  responsive: boolean; // Optimized for all screen sizes
-  accessible: boolean; // Voice and visual accessibility features
-}
-```
-
-### **2. Cloud-Based Intelligence**
-**Service architecture:**
-- **Advisory Engine**: Rule-based expert system in cloud
-- **Data Processing**: Server-side analysis of all inputs
-- **API Aggregation**: Single interface for multiple data sources
-- **Scalable Computing**: Auto-scaling based on user load
-
-### **3. Edge Computing Through Mobile Device**
-**Smartphone utilization:**
-- **Camera Processing**: On-device image preprocessing
-- **Voice Processing**: Browser-native speech recognition
-- **GPS Integration**: Built-in location services
-- **Local Storage**: Offline data caching and synchronization
-
----
-
-## **Future Hardware Integration Considerations**
-
-### **Phase 2: Optional Hardware Enhancement**
-If hardware integration becomes viable in the future, potential additions could include:
-
-**Low-Cost Sensors (Optional):**
-- **Basic Soil Moisture Probe**: Simple, affordable ($10-20) soil moisture detection
-- **Rain Gauge**: Manual reading weather measurement tool
-- **Temperature/Humidity Logger**: Battery-powered environmental monitoring
-
-**Integration Strategy:**
-```typescript
-// Future hardware abstraction layer
-interface HardwareService {
-  isAvailable: boolean;
-  sensors: Array<{
-    type: 'soil_moisture' | 'temperature' | 'humidity';
-    value: number;
-    timestamp: Date;
-    batteryLevel?: number;
-  }>;
-  fallbackToUserInput: () => void;
-}
-```
-
-**Key Principles for Future Hardware:**
-1. **Always Optional**: Software must function fully without hardware
-2. **Low-Cost**: Total hardware cost <$50 per farm
-3. **Low-Maintenance**: Minimal user intervention required
-4. **Weather-Resistant**: Designed for Kerala's monsoon climate
-5. **Battery Efficient**: >6 months operation on single battery
-
----
-
-## **Benefits of No-Hardware Approach**
-
-### **1. Accessibility**
-- ✅ **Zero Barrier to Entry**: Any farmer with a smartphone can use the app
-- ✅ **Language Support**: Multi-language interface (English, Hindi, Malayalam)
+This roadmap is implementation-ready and aligns with our current codebase (Next.js + Prisma + PWA).
 - ✅ **Digital Literacy Friendly**: Simple, guided user interactions
 
 ### **2. Scalability**

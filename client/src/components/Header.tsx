@@ -102,7 +102,7 @@ export default function Header() {
         </a>
         <div className="flex items-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-wrap justify-end">
           {/* Language dropdown */}
-<div ref={langRef} className="relative hidden sm:block">
+<div ref={langRef} className="relative">
             <button onClick={() => setLangOpen((o) => !o)} className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={langOpen} title={t('language') || 'Language'}>
               <Globe className="w-4 h-4" aria-hidden="true" /> {currentLabel}
             </button>
@@ -129,7 +129,7 @@ export default function Header() {
           </button>
 
           {/* More menu for Data Saver */}
-<div ref={moreRef} className="relative hidden md:block">
+<div ref={moreRef} className="relative">
             <button onClick={() => setMoreOpen((o) => !o)} className="text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={moreOpen} title="More">
               <MoreVertical className="w-5 h-5" aria-hidden="true" />
             </button>

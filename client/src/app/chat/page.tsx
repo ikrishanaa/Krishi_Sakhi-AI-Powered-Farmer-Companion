@@ -27,19 +27,34 @@ export default function ChatPage() {
     }
   }, []);
 
+  const sendingRef = useRef(false);
+  const lastMsgRef = useRef<string>('');
+  const lastTsRef = useRef<number>(0);
+
   const doAsk = async (q: string) => {
     setError(null);
-    if (!q.trim()) { setError(t('ask_question')); return; }
-    setMessages((m) => [...m, { role: 'user', text: q }]);
+    const msg = (q || '').trim();
+    if (!msg) { setError(t('ask_question')); return; }
+    if (loading || sendingRef.current) return; // guard against duplicate triggers
+    const norm = msg.replace(/\s+/g, ' ').toLowerCase();
+    const now = Date.now();
+    if (norm === lastMsgRef.current && now - lastTsRef.current < 5000) return; // dedupe within 5s
+
+    sendingRef.current = true;
+    lastMsgRef.current = norm;
+    lastTsRef.current = now;
+
+    setMessages((m) => [...m, { role: 'user', text: msg }]);
     setText('');
     setLoading(true);
     try {
-      const res = await ask({ text: q, crop: crop || undefined, lat: coords.lat, lon: coords.lon });
+      const res = await ask({ text: msg, crop: crop || undefined, lat: coords.lat, lon: coords.lon });
       setMessages((m) => [...m, { role: 'assistant', text: res.answer || '' }]);
     } catch (err: any) {
       setError(err.message || 'Query failed');
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
 
@@ -92,7 +107,7 @@ export default function ChatPage() {
           </div>
 
           {/* Messages list */}
-          <div ref={listRef} className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-3">
+          <div ref={listRef} className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-3 pb-28 md:pb-4">
             {messages.length === 0 && !loading && (
               <div className="text-center text-gray-600 text-base mt-8">{t('question_placeholder') || 'Ask anything about your crop, weather, irrigation or pests…'}</div>
             )}
@@ -105,9 +120,9 @@ export default function ChatPage() {
           </div>
 
           {/* Composer */}
-          <div className="sticky bottom-0 w-full border-t bg-white dark:bg-[#121212] dark:border-gray-800 px-3 md:px-6 py-3">
+          <div className="sticky bottom-[72px] md:bottom-0 w-full border-t bg-white dark:bg-[#121212] dark:border-gray-800 px-3 md:px-6 py-3 z-20" style={{ bottom: '72px' }}>
             <form onSubmit={onSubmit} className="flex items-center gap-2">
-              <VoiceButton onTranscript={(tx) => setText(tx)} title={t('voice') || 'Voice'} />
+              <VoiceButton onTranscript={(tx) => doAsk(tx)} title={t('voice') || 'Voice'} />
               <Input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
