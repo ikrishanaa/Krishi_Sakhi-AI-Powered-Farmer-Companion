@@ -123,7 +123,7 @@ export default function MarketTrendsPage() {
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
       <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('market_trends') || 'Market Trends'}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t('market_trends') || 'Market Trends'}</h1>
       <Card>
         <CardHeader>
           <CardHeaderTitle icon={<SlidersHorizontal className="w-5 h-5 text-emerald-700" />} title={t('market_trends') || 'Market Trends'} />
@@ -178,11 +178,13 @@ export default function MarketTrendsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
-              <div />
-              <IconButton aria-label={t('speak') || 'Speak'} title={t('speak') || 'Speak'} onClick={() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }}>
-                <Volume2 className="w-4 h-4" aria-hidden="true" />
-              </IconButton>
+            <div className="rounded-2xl bg-sky-100 p-3 mb-3">
+              <div className="flex items-center justify-between">
+                <div className="text-base font-medium text-gray-800">{t('market_trends') || 'Market Trends'} - {crop}</div>
+                <IconButton aria-label={t('speak') || 'Speak'} title={t('speak') || 'Speak'} onClick={() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }}>
+                  <Volume2 className="w-4 h-4" aria-hidden="true" />
+                </IconButton>
+              </div>
             </div>
             <div style={{ height: 320 }}>
               <Line data={chartData} options={chartOptions} />

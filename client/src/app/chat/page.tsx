@@ -70,7 +70,7 @@ export default function ChatPage() {
       <Suspense fallback={null}>
         <BootstrapQuery />
       </Suspense>
-      <h1 className="text-2xl font-semibold">{t('chat_title') || 'Ask Krishi Mitra'}</h1>
+      <h1 className="text-3xl font-semibold">{t('chat_title') || 'Ask Krishi Mitra'}</h1>
       <div className="rounded-2xl bg-white shadow-sm border p-4">
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
@@ -98,7 +98,7 @@ export default function ChatPage() {
         <div className="space-y-3">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-900'} px-3 py-2 rounded-2xl max-w-[80%]`}>{m.text}</div>
+              <div className={`${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-900'} px-4 py-3 rounded-2xl max-w-[80%] text-base leading-relaxed`}>{m.text}</div>
             </div>
           ))}
           {loading && <div className="text-sm text-gray-600">…</div>}

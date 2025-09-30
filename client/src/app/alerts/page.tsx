@@ -49,17 +49,17 @@ export default function AlertsPage() {
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="text-2xl font-semibold mb-4">{t('my_alerts') || 'Notifications'}</h1>
+        <h1 className="text-3xl font-semibold mb-4">{t('my_alerts') || 'Notifications'}</h1>
         {error && <p className="text-red-600" aria-live="assertive">{error}</p>}
         {alerts.length === 0 ? (
           <EmptyState title={t('no_alerts_yet') || 'No alerts yet.'} icon={<Bell className="w-4 h-4 text-amber-700" />} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {alerts.map((a, idx) => (
-              <div key={idx} className={`rounded-2xl border p-4 shadow-sm hover:shadow transition-all ${idx % 3 === 0 ? 'bg-amber-50' : idx % 3 === 1 ? 'bg-sky-50' : 'bg-emerald-50'}`}>
-                <div className="text-xs text-gray-600">{formatDate(a.created_at)}</div>
-                <div className="text-base font-semibold">{a.alert_type}</div>
-                <div className="text-sm text-gray-800">{a.content_text || a.content_key}</div>
+              <div key={idx} className={`rounded-2xl border p-4 shadow-sm hover:shadow transition-all ${idx % 3 === 0 ? 'bg-amber-100' : idx % 3 === 1 ? 'bg-sky-100' : 'bg-emerald-100'}`}>
+                <div className="text-xs text-gray-700">{formatDate(a.created_at)}</div>
+                <div className="text-lg font-semibold">{a.alert_type}</div>
+                <div className="text-base text-gray-900">{a.content_text || a.content_key}</div>
               </div>
             ))}
           </div>

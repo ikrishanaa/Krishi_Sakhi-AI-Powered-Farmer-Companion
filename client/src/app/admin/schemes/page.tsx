@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { adminCreateScheme, adminListSchemes, type Scheme } from '@/services/schemesService';
+import { adminCreateScheme, adminListSchemes, adminDeleteScheme, type Scheme } from '@/services/schemesService';
 import Button from '@/components/ui/button';
+import { fetchStates, fetchCities, fetchConstituencies } from '@/services/locationService';
 
 export default function AdminSchemesPage() {
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [targetState, setTargetState] = useState('');
+  const [targetCity, setTargetCity] = useState('');
+  const [targetConstituency, setTargetConstituency] = useState('');
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [constituencies, setConstituencies] = useState<string[]>([]);
   const [eligibility, setEligibility] = useState('');
   const [link, setLink] = useState('');
   const [start, setStart] = useState('');
@@ -27,11 +35,15 @@ export default function AdminSchemesPage() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => { (async () => setStates(await fetchStates()))(); }, []);
+  useEffect(() => { (async () => setCities(await fetchCities(targetState || undefined)))(); }, [targetState]);
+  useEffect(() => { (async () => setConstituencies(await fetchConstituencies(targetState || undefined, targetCity || undefined)))(); }, [targetState, targetCity]);
+
   const submit = async () => {
     try {
       setLoading(true);
       setError(null);
-      await adminCreateScheme({ title, description, eligibility, link, start_date: start || undefined, end_date: end || undefined, active });
+      await adminCreateScheme({ title, description, eligibility, link, start_date: start || undefined, end_date: end || undefined, active, image, target_state: targetState || undefined, target_city: targetCity || undefined, target_constituency: targetConstituency || undefined });
       setTitle(''); setDescription(''); setEligibility(''); setLink(''); setStart(''); setEnd(''); setActive(true);
       await load();
     } catch (e: any) {
@@ -58,6 +70,31 @@ export default function AdminSchemesPage() {
             <div className="sm:col-span-2">
               <label className="block text-sm text-gray-700 mb-1">Description</label>
               <textarea className="w-full rounded-md border px-3 py-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Image (optional)</label>
+              <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} className="block w-full" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Target State (optional)</label>
+              <select className="w-full rounded-md border px-3 py-2" value={targetState} onChange={(e) => setTargetState(e.target.value)}>
+                <option value="">All</option>
+                {states.map((s) => (<option key={s} value={s}>{s}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Target City (optional)</label>
+              <select className="w-full rounded-md border px-3 py-2" value={targetCity} onChange={(e) => setTargetCity(e.target.value)}>
+                <option value="">All</option>
+                {cities.map((c) => (<option key={c} value={c}>{c}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Target Constituency (optional)</label>
+              <select className="w-full rounded-md border px-3 py-2" value={targetConstituency} onChange={(e) => setTargetConstituency(e.target.value)}>
+                <option value="">All</option>
+                {constituencies.map((c) => (<option key={c} value={c}>{c}</option>))}
+              </select>
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-1">Link</label>
@@ -87,10 +124,15 @@ export default function AdminSchemesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {schemes.map((s) => (
               <div key={s.id} className="rounded-xl border p-3 bg-emerald-50">
-                <div className="font-semibold">{s.title}</div>
-                {s.description && <div className="text-sm text-gray-700 mt-1">{s.description}</div>}
-                <div className="text-xs text-gray-600 mt-1">{s.eligibility}</div>
-                {s.link && <a className="text-sm text-emerald-700 hover:underline" href={s.link} target="_blank" rel="noreferrer">Open link</a>}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-semibold">{s.title}</div>
+                    {s.description && <div className="text-sm text-gray-700 mt-1">{s.description}</div>}
+                    <div className="text-xs text-gray-600 mt-1">{s.eligibility}</div>
+                    {s.link && <a className="text-sm text-emerald-700 hover:underline" href={s.link} target="_blank" rel="noreferrer">Open link</a>}
+                  </div>
+                  <button onClick={async () => { await adminDeleteScheme(s.id); await load(); }} className="text-sm rounded-md border px-2 py-1 hover:bg-red-50">Delete</button>
+                </div>
               </div>
             ))}
           </div>

@@ -19,6 +19,7 @@ import InstallPrompt from '@/components/pwa/InstallPrompt';
 import { ThemeProvider } from '@/lib/theme';
 import BottomNav from '@/components/BottomNav';
 import FloatingMicFab from '@/components/FloatingMicFab';
+import HideOnRoutes from '@/components/HideOnRoutes';
 import ChunkReload from '@/components/pwa/ChunkReload';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -38,7 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <DataSaverProvider>
               <Header />
 <main className="mx-auto max-w-3xl px-4 py-6 pb-6 md:pb-0">{children}</main>
-              <FloatingMicFab />
+              <HideOnRoutes prefixes={["/admin"]}>
+                <FloatingMicFab />
+              </HideOnRoutes>
               <BottomNav />
               {/* Register service worker for PWA */}
               <SWRegister />

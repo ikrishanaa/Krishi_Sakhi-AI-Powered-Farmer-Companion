@@ -5,7 +5,7 @@ export type ChatQuery = { text: string; crop?: string; lat?: number; lon?: numbe
 export type ChatAnswer = { answer: string; model?: string; facts?: string[]; caution?: string[]; raw?: unknown };
 
 export class ChatService {
-  private async callGemini(parts: any[], model = 'gemini-1.5-flash'): Promise<any> {
+  private async callGemini(parts: any[], model = env.GEN_AI_MODEL || 'gemini-1.5-flash-latest'): Promise<any> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEN_AI_API_KEY}`;
     const res = await fetch(url, {
       method: 'POST',

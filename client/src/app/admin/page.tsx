@@ -97,14 +97,31 @@ export default function AdminDashboardPage() {
   if (loading) return <div className="max-w-4xl mx-auto">{t('loading_dashboard') || 'Loading dashboard…'}</div>;
   
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('admin_dashboard') || 'Admin Dashboard'}</h1>
-        <div className="flex items-center gap-3">
-          <Button href="/admin/geo" variant="outline" size="sm" className="inline-flex items-center gap-1"><Map className="w-4 h-4" /> {t('geo_analytics') || 'Geo Analytics'}</Button>
-          <Button onClick={onLogout} variant="outline" size="sm">{t('logout') || 'Logout'}</Button>
-        </div>
-      </div>
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
+      <div className="grid grid-cols-12 gap-4 px-4 py-6">
+        {/* Sidebar */}
+        <aside className="hidden md:block col-span-3 xl:col-span-2 md:sticky md:top-0 self-start">
+          <div className="h-screen">
+            <div className="border-r bg-white/95 shadow-sm h-full">
+              <nav className="p-3 h-full overflow-y-auto">
+                <ul className="space-y-1">
+                  <li><a href="/admin/grievances" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors"><span>📄</span><span>Farmer's Grievances</span></a></li>
+                  <li><a href="/admin/geo" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors"><span>🗺️</span><span>GeoAnalytics</span></a></li>
+                  <li><a href="/admin/schemes" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors"><span>🏷️</span><span>Schemes</span></a></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="col-span-12 md:col-span-9 xl:col-span-10 space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight">{t('admin_dashboard') || 'Admin Dashboard'}</h1>
+            <div className="flex items-center gap-3">
+              <Button href="/admin/geo" variant="outline" size="sm" className="inline-flex items-center gap-1"><Map className="w-4 h-4" /> {t('geo_analytics') || 'Geo Analytics'}</Button>
+            </div>
+          </div>
 
       {error && <p className="text-red-600">{error}</p>}
 
@@ -148,12 +165,12 @@ export default function AdminDashboardPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardHeaderTitle icon={<Megaphone className="w-5 h-5 text-emerald-700" />} title={t('broadcast_advisory') || 'Broadcast Advisory'} />
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600">{t('send_short_advisory_note') || 'Send a short advisory. Optionally target by location.'}</p>
+          <Card>
+            <CardHeader>
+              <CardHeaderTitle icon={<Megaphone className="w-5 h-5 text-emerald-700" />} title={t('broadcast_advisory') || 'Broadcast Advisory'} />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">{t('send_short_advisory_note') || 'Send a short advisory. Optionally target by location.'}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium">{t('state') || 'State'}</label>
@@ -187,11 +204,13 @@ export default function AdminDashboardPage() {
           <div className="mt-2">
             <Button onClick={onBroadcast} disabled={!message.trim()}>{t('send_broadcast') || 'Send Broadcast'}</Button>
           </div>
-          {deliveries !== null && (
-            <p className="text-green-700 text-sm">{(t('delivered_to') || 'Delivered to')} {deliveries} {(t('users') || 'users')}.</p>
-          )}
-        </CardContent>
-      </Card>
+              {deliveries !== null && (
+                <p className="text-green-700 text-sm">{(t('delivered_to') || 'Delivered to')} {deliveries} {(t('users') || 'users')}.</p>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
     </div>
   );
 }

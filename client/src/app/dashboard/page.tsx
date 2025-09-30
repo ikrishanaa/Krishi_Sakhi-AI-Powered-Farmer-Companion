@@ -56,6 +56,7 @@ export default function DashboardPage() {
   const [wError, setWError] = useState<string | null>(null);
   const [aError, setAError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<{ text: string }[]>([]);
+  const [schemes, setSchemes] = useState<{ id: number; title: string }[]>([]);
   const [sideOpen, setSideOpen] = useState(false);
 
   // Market data for major crops
@@ -168,6 +169,17 @@ export default function DashboardPage() {
       } catch {}
     })();
   }, [profile?.state, profile?.city]);
+
+  // Schemes preview for dashboard
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get('/schemes');
+        const s = Array.isArray(data?.schemes) ? data.schemes.slice(0, 3).map((x: any) => ({ id: x.id, title: x.title })) : [];
+        setSchemes(s);
+      } catch {}
+    })();
+  }, []);
 
   const locationText = useMemo(() => {
     if (weather?.lat && weather?.lon) return `${formatNumber(weather.lat, 2)}, ${formatNumber(weather.lon, 2)}`;
@@ -348,12 +360,18 @@ export default function DashboardPage() {
             </CardWrap>
 
             {/* Schemes */}
-            <CardWrap className="p-5 bg-emerald-50">
+            <CardWrap className="p-5 bg-emerald-100">
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-6 h-6 rounded-full bg-emerald-600" />
                 <div className="text-lg font-semibold">{t('schemes') || 'Schemes'}</div>
               </div>
-              <div className="text-sm text-gray-700">Latest government schemes for you.</div>
+              {schemes.length === 0 ? (
+                <div className="text-sm text-gray-700">Latest government schemes for you.</div>
+              ) : (
+                <ul className="text-sm text-gray-800 list-disc pl-5 space-y-1">
+                  {schemes.map((s) => (<li key={s.id}>{s.title}</li>))}
+                </ul>
+              )}
               <div className="mt-3 text-right">
                 <a href="/schemes" className="text-sm text-emerald-700 hover:underline">{t('view_all') || 'View all'}</a>
               </div>

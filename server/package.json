@@ -20,11 +20,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
-"seed": "ts-node --transpile-only src/database/seeds/admin_seed.ts",
+    "seed": "ts-node --transpile-only src/database/seeds/admin_seed.ts",
     "seed:farms": "ts-node --transpile-only src/database/seeds/farms_seed.ts",
     "debug:fallback": "ts-node --transpile-only src/scripts/debug_fallback.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.9.1",
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",

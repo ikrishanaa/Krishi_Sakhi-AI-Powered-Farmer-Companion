@@ -108,7 +108,7 @@ export default function PestDetectionPage() {
       {result && (
         <div className="rounded-2xl bg-white shadow-sm border p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{t('result_title') || 'Result'}</h2>
+            <h2 className="text-xl font-semibold">{t('result_title') || 'Result'}</h2>
             <button onClick={() => {
               const parts: string[] = [];
               if (result?.prediction) parts.push(`${t('prediction_label') || 'Prediction'}: ${result.prediction}`);
@@ -119,7 +119,7 @@ export default function PestDetectionPage() {
             }} className="text-sm rounded-md border px-3 py-1 hover:border-brand">{t('speak') || 'Speak'}</button>
           </div>
           {result.prediction && (
-            <p><span className="font-medium">{t('prediction_label') || 'Prediction'}:</span> {result.prediction}{typeof result.confidence === 'number' ? ` (confidence ${(result.confidence * 100).toFixed(0)}%)` : ''}</p>
+            <p className="text-base"><span className="font-medium">{t('prediction_label') || 'Prediction'}:</span> {result.prediction}{typeof result.confidence === 'number' ? ` (confidence ${(result.confidence * 100).toFixed(0)}%)` : ''}</p>
           )}
           {result.likely_causes && result.likely_causes.length > 0 && (
             <div>

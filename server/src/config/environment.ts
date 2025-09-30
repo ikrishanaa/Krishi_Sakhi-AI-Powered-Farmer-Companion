@@ -49,6 +49,7 @@ const EnvSchema = z.object({
   // Gen AI provider for chat/pest (optional; demo fallback if unset)
   GEN_AI_PROVIDER: z.string().default('gemini'),
   GEN_AI_API_KEY: z.string().optional(),
+  GEN_AI_MODEL: z.string().default('gemini-1.5-flash-latest'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
