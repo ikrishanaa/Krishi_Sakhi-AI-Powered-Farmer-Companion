@@ -25,6 +25,7 @@
     "debug:fallback": "ts-node --transpile-only src/scripts/debug_fallback.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.21.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.9.1",
     "bcryptjs": "^2.4.3",

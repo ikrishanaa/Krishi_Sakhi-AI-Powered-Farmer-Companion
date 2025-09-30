@@ -35,10 +35,10 @@ function Carousel() {
           <img src={src} alt="Banner" className="w-full h-full object-cover" />
         </div>
       ))}
-      <button aria-label="Previous" onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 shadow transition-colors">
+      <button aria-label="Previous" onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white dark:bg-[#121212]/80 dark:hover:bg-[#1E1E1E] p-2 shadow transition-colors">
         <ChevronLeft className="w-6 h-6" />
       </button>
-      <button aria-label="Next" onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 shadow transition-colors">
+      <button aria-label="Next" onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white dark:bg-[#121212]/80 dark:hover:bg-[#1E1E1E] p-2 shadow transition-colors">
         <ChevronRight className="w-6 h-6" />
       </button>
     </div>
@@ -230,17 +230,17 @@ export default function DashboardPage() {
   ];
 
   const CardWrap = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-    <div className={`group rounded-2xl border bg-white/95 shadow-sm hover:shadow-2xl transition-all duration-300 ${className}`}>
+    <div className={`group rounded-2xl border bg-white/95 dark:bg-[#1E1E1E]/95 dark:border-gray-800 shadow-sm hover:shadow-2xl transition-all duration-300 ${className}`}>
       {children}
     </div>
   );
 
   return (
     <FullBleed>
-      <div className="grid grid-cols-12 gap-4 px-4 py-6 bg-gradient-to-b from-emerald-50 to-white">
+      <div className="grid grid-cols-12 gap-4 px-4 py-6 bg-gradient-to-b from-emerald-50 to-white dark:from-[#0f0f0f] dark:to-[#121212]">
         {/* Mobile top row: hamburger */}
         <div className="col-span-12 md:hidden flex items-center justify-between">
-          <button onClick={() => setSideOpen(true)} className="rounded-md border bg-white px-3 py-1.5 shadow-sm">
+          <button onClick={() => setSideOpen(true)} className="rounded-md border bg-white dark:bg-[#1E1E1E] dark:border-gray-800 px-3 py-1.5 shadow-sm">
             ☰ Menu
           </button>
           <div className="text-lg font-semibold">{t('dashboard_title') || 'Farmer Dashboard'}</div>
@@ -249,12 +249,12 @@ export default function DashboardPage() {
         {/* Sidebar */}
         <aside className="hidden md:block col-span-3 xl:col-span-2 md:sticky md:top-0 self-start">
           <div className="h-screen">
-            <div className="border-r bg-white/95 shadow-sm h-full">
+            <div className="border-r bg-white/95 dark:bg-[#1E1E1E]/95 dark:border-gray-800 shadow-sm h-full">
               <nav className="p-3 h-full overflow-y-auto">
                 <ul className="space-y-1">
                   {menu.map((m) => (
                     <li key={m.href}>
-                      <a href={m.href} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-800 transition-colors ${typeof window !== 'undefined' && window.location.pathname.startsWith(m.href) ? 'bg-emerald-100 text-emerald-900' : 'text-gray-700'}`}>
+                      <a href={m.href} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-800 transition-colors ${typeof window !== 'undefined' && window.location.pathname.startsWith(m.href) ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-300' : 'text-gray-700'}`}>
                         <span className="text-emerald-700">{m.icon}</span>
                         <span>{m.label}</span>
                       </a>
@@ -270,10 +270,10 @@ export default function DashboardPage() {
         {sideOpen && (
           <div className="md:hidden fixed inset-0 z-40">
             <div className="absolute inset-0 bg-black/30" onClick={() => setSideOpen(false)} />
-            <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-2xl p-4">
+            <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-[#1E1E1E] shadow-2xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-lg font-semibold">Menu</div>
-                <button className="rounded-md border px-2 py-1" onClick={() => setSideOpen(false)}>Close</button>
+                <button className="rounded-md border px-2 py-1 dark:border-gray-800" onClick={() => setSideOpen(false)}>Close</button>
               </div>
               <nav>
                 <ul className="space-y-1">
@@ -301,7 +301,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h2 className="text-xl sm:text-2xl font-semibold">{welcomeName ? `Hello, ${welcomeName}!` : 'Hello!'} <span className="font-normal">Welcome back!</span></h2>
-                <div className="text-sm text-gray-600">{t('profile_location') || 'Profile location'}: {locationText}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{t('profile_location') || 'Profile location'}: {locationText}</div>
               </div>
               <div className="text-right">
                 <a href="/submit" className="text-sm text-emerald-700 hover:underline">{t('update_profile') || 'Update Profile'}</a>
@@ -310,7 +310,7 @@ export default function DashboardPage() {
             {/* Reminders pill bar */}
             <div className="mt-4 flex gap-2 overflow-x-auto">
               {reminders.map((r, i) => (
-                <div key={i} className="shrink-0 rounded-full border bg-emerald-50 text-emerald-900 px-3 py-1.5 text-xs shadow-sm hover:shadow transition-all">{r}</div>
+                <div key={i} className="shrink-0 rounded-full border bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-300 px-3 py-1.5 text-xs shadow-sm hover:shadow transition-all">{r}</div>
               ))}
             </div>
           </CardWrap>
@@ -324,18 +324,18 @@ export default function DashboardPage() {
                 <div className="text-lg font-semibold">{t('weather') || 'Weather'}</div>
               </div>
               {!weather && !wError && (!profile?.state || !profile?.city) && (
-                <div className="text-sm text-gray-700">{t('complete_profile_weather') || 'Complete your profile for local weather.'} <a className="text-emerald-700 hover:underline" href="/submit">{t('complete_now') || 'Complete now'}</a></div>
+                <div className="text-sm text-gray-700 dark:text-gray-300">{t('complete_profile_weather') || 'Complete your profile for local weather.'} <a className="text-emerald-700 hover:underline" href="/submit">{t('complete_now') || 'Complete now'}</a></div>
               )}
               {(!weather && !wError && profile?.state && profile?.city) && (
                 <div className="space-y-2" role="status" aria-live="polite">
-                  <div className="h-4 w-36 animate-pulse bg-gray-200 rounded" />
-                  <div className="h-4 w-64 animate-pulse bg-gray-200 rounded" />
-                  <div className="h-4 w-48 animate-pulse bg-gray-200 rounded" />
+                  <div className="h-4 w-36 animate-pulse bg-gray-200 dark:bg-gray-800 rounded" />
+                  <div className="h-4 w-64 animate-pulse bg-gray-200 dark:bg-gray-800 rounded" />
+                  <div className="h-4 w-48 animate-pulse bg-gray-200 dark:bg-gray-800 rounded" />
                 </div>
               )}
               {wError && <p className="text-sm text-red-600">{wError}</p>}
               {weather && (
-                <div className="text-sm text-gray-700 space-y-1">
+                <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                   <div>{t('location') || 'Location'}: {locationText}</div>
                   <div>{t('temp') || 'Temp'}: {formatNumber(weather.current?.temp)}° | {t('humidity') || 'Humidity'}: {formatNumber(weather.current?.humidity)}% | {t('wind') || 'Wind'}: {formatNumber(weather.current?.wind_speed)}</div>
                   <div>{t('conditions') || 'Conditions'}: {weather.current?.weather?.[0]?.description || '—'}</div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                 <div className="text-lg font-semibold">{t('advisory') || 'Advisory'}</div>
               </div>
               {timeline.length === 0 ? (
-                <div className="text-sm text-gray-600">{t('no_items_yet') || 'No items yet.'}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{t('no_items_yet') || 'No items yet.'}</div>
               ) : (
                 <div className="text-sm text-gray-800">{timeline[0].text}</div>
               )}
@@ -389,7 +389,7 @@ export default function DashboardPage() {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-gray-600">
+                    <tr className="text-left text-gray-600 dark:text-gray-400">
                       <th className="py-2 pr-4">{t('crop') || 'Crop'}</th>
                       <th className="py-2 pr-4">{t('price') || 'Price'}</th>
                       <th className="py-2">{t('change') || 'Change'}</th>
@@ -408,8 +408,8 @@ export default function DashboardPage() {
                           <td className="py-2">
                             {typeof delta === 'number' ? (
                               <span className="inline-flex items-center gap-1 text-xs">
-                                {delta > 0 ? <ArrowUpRight className="w-4 h-4 text-emerald-700" /> : delta < 0 ? <ArrowDownRight className="w-4 h-4 text-red-700" /> : <Minus className="w-4 h-4 text-gray-600" />}
-                                <span className={delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-700' : 'text-gray-600'}>{`${Math.abs(Math.round(delta))}%`}</span>
+                                {delta > 0 ? <ArrowUpRight className="w-4 h-4 text-emerald-700" /> : delta < 0 ? <ArrowDownRight className="w-4 h-4 text-red-700" /> : <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
+                                <span className={delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-700' : 'text-gray-600 dark:text-gray-400'}>{`${Math.abs(Math.round(delta))}%`}</span>
                               </span>
                             ) : '—'}
                           </td>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                 <LineChart className="w-6 h-6 text-emerald-700" />
                 <div className="text-lg font-semibold">{t('market_advisory') || 'Market Advisory'}</div>
               </div>
-              <ul className="list-disc pl-5 text-sm text-gray-800 space-y-1">
+              <ul className="list-disc pl-5 text-sm text-gray-800 dark:text-gray-200 space-y-1">
                 {crops.map((c) => {
                   const info = market[c] || {};
                   const curr = info.curr; const prev = info.prev;
@@ -450,14 +450,14 @@ export default function DashboardPage() {
               <div className="text-lg font-semibold">{t('tasks_checklist') || 'Tasks & Checklist'}</div>
               <div className="text-xs text-gray-600">{progress}% {t('complete') || 'complete'}</div>
             </div>
-            <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
               <div className="h-full bg-emerald-600" style={{ width: `${progress}%` }} />
             </div>
             <ul className="mt-4 space-y-2">
               {tasks.map((task) => (
                 <li key={task.id} className="rounded-xl border px-3 py-2 flex items-center gap-3 hover:shadow transition-all" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-                  <input id={`task-${task.id}`} type="checkbox" className="w-4 h-4 rounded border-gray-400 text-emerald-600 focus:ring-emerald-600" checked={task.done} onChange={() => toggleTask(task.id)} />
-                  <label htmlFor={`task-${task.id}`} className={`text-sm ${task.done ? 'line-through text-gray-500' : 'text-gray-800'}`}>{task.label}</label>
+                  <input id={`task-${task.id}`} type="checkbox" className="w-4 h-4 rounded border-gray-400 dark:border-gray-700 text-emerald-600 focus:ring-emerald-600" checked={task.done} onChange={() => toggleTask(task.id)} />
+                  <label htmlFor={`task-${task.id}`} className={`text-sm ${task.done ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{task.label}</label>
                 </li>
               ))}
             </ul>

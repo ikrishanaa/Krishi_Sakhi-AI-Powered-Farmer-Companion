@@ -93,9 +93,14 @@ export default function Header() {
 
   return (
 <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-[#121212] backdrop-blur">
-      <div className="mx-auto w-full max-w-7xl px-4 py-2 flex items-center justify-between">
-        <div className="text-lg font-semibold text-brand dark:text-brand-light"><a href="/">Krishi Sakhi</a></div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+      <div className="w-full px-3 sm:px-4 md:px-6 py-2 flex items-center justify-between">
+        <a href="/" className="inline-flex items-center gap-2">
+          {/* Simple agriculture logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-leaf.svg" alt="Krishi Sakhi logo" className="h-7 w-7" />
+          <span className="text-lg font-semibold text-brand dark:text-brand-light">Krishi Sakhi</span>
+        </a>
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-wrap justify-end">
           {/* Language dropdown */}
 <div ref={langRef} className="relative hidden sm:block">
             <button onClick={() => setLangOpen((o) => !o)} className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200 hover:text-brand dark:hover:text-brand-light" aria-haspopup="menu" aria-expanded={langOpen} title={t('language') || 'Language'}>

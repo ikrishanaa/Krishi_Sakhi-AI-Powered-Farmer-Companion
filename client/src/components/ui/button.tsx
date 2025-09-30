@@ -14,8 +14,8 @@ function classes(variant: Variant, size: Size) {
   };
   const variants: Record<Variant, string> = {
     primary: 'bg-brand text-white hover:bg-brand/90 disabled:opacity-50',
-    outline: 'border hover:border-brand disabled:opacity-50',
-    ghost: 'hover:bg-gray-100 disabled:opacity-50',
+    outline: 'border hover:border-brand disabled:opacity-50 dark:border-gray-700',
+    ghost: 'hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-[#222]',
   };
   return `${base} ${sizes[size]} ${variants[variant]}`;
 }

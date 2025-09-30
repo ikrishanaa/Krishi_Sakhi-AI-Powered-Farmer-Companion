@@ -51,14 +51,14 @@ export default function VoiceButton({ onTranscript, className, title }: { onTran
 
   if (!supported) {
     return (
-      <button type="button" className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed ${className || ''}`} title={title || t('voice_not_supported') || 'Voice not supported'}>
+      <button type="button" className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed dark:border-gray-700 dark:text-gray-100 ${className || ''}`} title={title || t('voice_not_supported') || 'Voice not supported'}>
         <Mic className="w-4 h-4 mr-1" /> {t('voice') || 'Voice'}
       </button>
     );
   }
 
   return (
-    <button type="button" onClick={recording ? stop : start} className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:border-brand ${className || ''}`} title={title || (recording ? (t('stop') || 'Stop') : (t('voice') || 'Voice'))}>
+    <button type="button" onClick={recording ? stop : start} className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:border-brand dark:border-gray-700 dark:text-gray-100 ${className || ''}`} title={title || (recording ? (t('stop') || 'Stop') : (t('voice') || 'Voice'))}>
       {recording ? <Square className="w-4 h-4 mr-1 text-red-600" /> : <Mic className="w-4 h-4 mr-1" />}
       {recording ? (t('stop') || 'Stop') : (t('voice') || 'Voice')}
     </button>
