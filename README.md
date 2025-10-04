@@ -260,7 +260,3 @@ NODE_ENV=production PORT=4000 node dist/index.js
 - Hardware integration rationale and future ingestion: HARDWARE_INTEGRATION.md
 - Milestones and testing guidance: MILESTONES.md, TESTING.md
 
-
-## License
-
-Add your license file (e.g., MIT) at the repository root.
