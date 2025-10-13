@@ -62,9 +62,8 @@ SIH PROT/
 │
 ├─ docker-compose.yml          # Local Postgres service
 ├─ PROJECT_STRUCTURE.md        # Broader, forward-looking structure reference
-├─ HARDWARE_INTEGRATION.md     # Rationale + future IoT ingestion plan
-├─ TESTING.md                  # Testing strategy & examples
-└─ WARP.md                     # Quickstart and troubleshooting notes
+├─ HARDWARE_INTEGRATION.md     # Rationale + future IoT ingestion plan                
+└─ TESTING.md
 ```
 
 
