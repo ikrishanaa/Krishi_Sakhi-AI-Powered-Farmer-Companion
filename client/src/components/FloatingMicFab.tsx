@@ -66,15 +66,17 @@ export default function FloatingMicFab() {
   if (pathname.startsWith('/chat')) return null;
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={t('voice') || 'Voice'}
-      title={t('voice') || 'Voice'}
-      className="fixed right-6 z-50 rounded-full shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand md:[--fab-bottom:1.5rem] [--fab-bottom:6rem]"
-      style={{ width: 64, height: 64, backgroundColor: '#2E7D32', bottom: 'calc(var(--fab-bottom, 1.5rem) + env(safe-area-inset-bottom))' }}
-    >
-      <Mic className="w-7 h-7 text-white mx-auto" aria-hidden="true" />
-    </button>
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center h-20 pointer-events-none z-50 pb-safe md:h-auto md:bottom-8 md:right-8 md:left-auto md:translate-x-0 md:pb-0">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={t('voice') || 'Voice Assistant'}
+        title={t('voice') || 'Voice Assistant'}
+        className={`pointer-events-auto w-[72px] h-[72px] md:w-20 md:h-20 bg-primary text-on-primary rounded-full shadow-fab flex items-center justify-center transition-transform active:scale-95 group relative overflow-hidden -translate-y-1 md:translate-y-0 ${recording ? 'mic-ripple' : ''}`}
+      >
+        <div className={`absolute inset-0 rounded-full border-2 border-white/20 ${recording ? 'animate-ping-slow' : ''}`}></div>
+        <span className="material-symbols-outlined relative z-10 text-[36px] md:text-[40px]">mic</span>
+      </button>
+    </div>
   );
 }

@@ -2,13 +2,21 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { getFarms, getFarmDetails, updateTaskStatus, updateFarm, uploadFarmPhotos, uploadSoilReport, type FarmListItem, type FarmsSummary } from '@/services/farmService';
+import { getFarms, getFarmDetails, updateTaskStatus, updateFarm, uploadFarmPhotos, uploadSoilReport, deleteFarm, addCropCycle, deleteCropCycle, type FarmListItem, type FarmsSummary } from '@/services/farmService';
 import { api, TOKEN_KEY } from '@/services/api';
+import { getLatestReading, type SensorReading } from '@/services/hardwareService';
 import Button from '@/components/ui/button';
-import { Plus, Edit3, Droplets } from 'lucide-react';
+import { Plus, Edit3, Droplets, Trash2 } from 'lucide-react';
+
+const CROP_LIST = [
+  'Wheat','Paddy (Rice)','Tomato','Sugarcane','Cotton','Maize','Soybean','Potato','Onion','Chilli',
+  'Groundnut','Mustard','Jowar (Sorghum)','Bajra (Pearl Millet)','Ragi (Finger Millet)','Moong (Green Gram)',
+  'Urad (Black Gram)','Arhar (Tur Dal)','Chana (Chickpea)','Masoor (Lentil)','Brinjal','Cauliflower',
+  'Cabbage','Okra (Bhindi)','Peas','Garlic','Ginger','Turmeric','Banana','Mango'
+];
 
 function Pill({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-full bg-[#FFD600] text-black text-xs px-3 py-1 font-medium shadow-sm">{children}</div>;
+  return <div className="rounded-full bg-primary/10 text-primary text-xs px-3 py-1 font-bold shadow-sm">{children}</div>;
 }
 
 export default function FarmsPage() {
@@ -84,23 +92,51 @@ export default function FarmsPage() {
       const newStatus = task.status === 'done' ? 'pending' : 'done';
       if (!details?.farm?.id) return;
       await updateTaskStatus(details.farm.id, task.id, newStatus);
-      // optimistic UI
       setDetails((prev) => prev ? { ...prev, tasks: prev.tasks.map((t) => t.id === task.id ? { ...t, status: newStatus } : t) } : prev);
     } catch (e: any) {
       console.error(e);
     }
   }
 
+  // Sensor data for active farm
+  const [sensorReading, setSensorReading] = useState<SensorReading | null>(null);
+  useEffect(() => {
+    if (!activeId) { setSensorReading(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const result = await getLatestReading(activeId);
+        if (!cancelled) setSensorReading(result.reading);
+      } catch {}
+    };
+    load();
+    const iv = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [activeId]);
+
+  async function handleDeleteFarm(farmId: number) {
+    if (!confirm('Delete this farm? This cannot be undone.')) return;
+    try {
+      await deleteFarm(farmId);
+      const data = await getFarms();
+      setFarms(data.farms);
+      setSummary(data.summary);
+      setActiveId(data.farms[0]?.id || null);
+    } catch (e: any) {
+      alert(e?.message || 'Failed to delete farm');
+    }
+  }
+
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F9FAF9]">
-      <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-28">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-semibold">{t('hello') || 'Hello'} {farmerName ? `${farmerName},` : ''}</h1>
-            <div className="text-gray-600">{t('you_have_farms') || 'You have'} {farms.length} {t('farms') || 'farms'}</div>
+            <h1 className="text-2xl font-bold tracking-tight text-text-high">{t('hello') || 'Hello'} {farmerName ? `${farmerName},` : ''}</h1>
+            <div className="text-text-med font-medium">{t('you_have_farms') || 'You have'} {farms.length} {t('farms') || 'farms'}</div>
           </div>
-          <Button className="rounded-full bg-[#FFD600] text-black hover:opacity-90 flex items-center gap-2 px-4 py-2" onClick={() => setShowAdd(true)}>
+          <Button className="rounded-full bg-primary text-on-primary hover:opacity-90 flex items-center gap-2 px-5 py-2.5 font-bold shadow-sm" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" /> {t('add_farm') || 'Add Farm'}
           </Button>
         </div>
@@ -136,46 +172,85 @@ export default function FarmsPage() {
 
         {/* Active farm details */}
         {details && (
-          <div className="rounded-2xl bg-white shadow-sm border p-4 mb-6 relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-lg font-semibold">{details.farm.name || `Farm ${details.farm.id}`}</div>
-              <Button className="rounded-full bg-[#2E7D32] text-white hover:bg-[#256b2a] flex items-center gap-2 px-3 py-1.5" onClick={() => setShowEdit(true)}>
-                <Edit3 className="w-4 h-4" /> {t('update_details') || 'Update Details'}
-              </Button>
+          <div className="rounded-xl-custom bg-surface shadow-card border border-surface-variant/50 p-5 mb-6 relative">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-lg font-bold text-text-high">{details.farm.name || `Farm ${details.farm.id}`}</div>
+              <div className="flex items-center gap-2">
+                <Button className="rounded-full bg-primary text-on-primary hover:bg-primary/90 flex items-center gap-2 px-3 py-1.5 text-sm font-bold" onClick={() => setShowEdit(true)}>
+                  <Edit3 className="w-3.5 h-3.5" /> Edit
+                </Button>
+                <button onClick={() => handleDeleteFarm(details.farm.id)} className="rounded-full border border-red-200 text-red-600 hover:bg-red-50 p-2 transition-colors" title="Delete Farm">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border p-3">
-                <div className="text-sm text-gray-500">{t('crop') || 'Crop'}</div>
-                <div className="font-medium">{details.farm.crop || '—'}</div>
+              <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                <div className="text-sm text-text-med font-medium">{t('crop') || 'Crop'}</div>
+                <div className="font-bold text-text-high">{details.farm.crop || '—'}</div>
               </div>
-              <div className="rounded-xl border p-3">
-                <div className="text-sm text-gray-500">{t('area') || 'Area'}</div>
-                <div className="font-medium">{details.farm.area_acres != null ? `${details.farm.area_acres} acres` : '—'}</div>
+              <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                <div className="text-sm text-text-med font-medium">{t('area') || 'Area'}</div>
+                <div className="font-bold text-text-high">{details.farm.area_acres != null ? `${details.farm.area_acres} acres` : '—'}</div>
               </div>
-              <div className="rounded-xl border p-3">
-                <div className="text-sm text-gray-500">{t('status') || 'Status'}</div>
-                <div className="font-medium">{details.farm.status}</div>
+              <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                <div className="text-sm text-text-med font-medium">{t('status') || 'Status'}</div>
+                <div className="font-bold text-text-high">{details.farm.status}</div>
               </div>
             </div>
 
+            {/* Crop Cycles */}
+            {details.cropCycles && details.cropCycles.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-bold text-text-high mb-2">Active Crops</div>
+                <div className="flex flex-wrap gap-2">
+                  {details.cropCycles.map((c: any) => (
+                    <div key={c.id} className="bg-primary/5 border border-primary/10 rounded-full px-3 py-1.5 flex items-center gap-2">
+                      <span className="text-sm font-bold text-primary">{c.crop_name}</span>
+                      {c.stage && <span className="text-xs text-text-med">• {c.stage}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sensor Preview */}
+            {sensorReading && (
+              <div className="mt-4 bg-background rounded-xl p-3 border border-surface-variant/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-primary text-sm">sensors</span>
+                  <span className="text-sm font-bold text-text-high">Live Sensors</span>
+                  <span className="ml-auto text-[10px] text-text-med">{new Date(sensorReading.recorded_at).toLocaleTimeString()}</span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
+                  {sensorReading.temperature != null && <div className="text-xs"><div className="font-bold text-text-high">{sensorReading.temperature.toFixed(1)}°C</div><div className="text-text-med">Temp</div></div>}
+                  {sensorReading.humidity != null && <div className="text-xs"><div className="font-bold text-text-high">{sensorReading.humidity.toFixed(0)}%</div><div className="text-text-med">Humidity</div></div>}
+                  {sensorReading.soil_moisture != null && <div className="text-xs"><div className="font-bold text-text-high">{sensorReading.soil_moisture.toFixed(0)}%</div><div className="text-text-med">Soil</div></div>}
+                  {sensorReading.nitrogen != null && <div className="text-xs"><div className="font-bold text-[#7B1FA2]">{sensorReading.nitrogen.toFixed(0)}</div><div className="text-text-med">N</div></div>}
+                  {sensorReading.phosphorus != null && <div className="text-xs"><div className="font-bold text-[#F57F17]">{sensorReading.phosphorus.toFixed(0)}</div><div className="text-text-med">P</div></div>}
+                  {sensorReading.potassium != null && <div className="text-xs"><div className="font-bold text-[#E65100]">{sensorReading.potassium.toFixed(0)}</div><div className="text-text-med">K</div></div>}
+                </div>
+              </div>
+            )}
+
             {/* AI Predictions */}
             <div className="mt-4">
-              <div className="text-base font-semibold mb-2">{t('ai_predictions_for') || 'AI Predictions for'} {details.farm.name}</div>
+              <div className="text-sm font-bold text-text-high mb-2">{t('ai_predictions_for') || 'AI Predictions for'} {details.farm.name}</div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl border p-3">
-                  <div className="text-sm text-gray-500">{t('yield_forecast') || 'Yield Forecast'}</div>
-                  <div className="h-2 bg-gray-200 rounded overflow-hidden mt-2">
-                    <div className="h-full bg-[#2E7D32]" style={{ width: `${details.metrics?.yield_forecast || 0}%` }} />
+                <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                  <div className="text-sm text-text-med font-medium">{t('yield_forecast') || 'Yield Forecast'}</div>
+                  <div className="h-2 bg-surface-variant rounded overflow-hidden mt-2">
+                    <div className="h-full bg-primary" style={{ width: `${details.metrics?.yield_forecast || 0}%` }} />
                   </div>
-                  <div className="text-sm mt-1">{details.metrics?.yield_forecast ?? '—'}%</div>
+                  <div className="text-sm mt-1 font-bold text-text-high">{details.metrics?.yield_forecast ?? '—'}%</div>
                 </div>
-                <div className="rounded-xl border p-3">
-                  <div className="text-sm text-gray-500">{t('pest_risk') || 'Pest Risk'}</div>
-                  <div className="font-medium">{details.metrics?.pest_risk || '—'}</div>
+                <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                  <div className="text-sm text-text-med font-medium">{t('pest_risk') || 'Pest Risk'}</div>
+                  <div className="font-bold text-text-high">{details.metrics?.pest_risk || '—'}</div>
                 </div>
-                <div className="rounded-xl border p-3">
-                  <div className="text-sm text-gray-500">{t('water_requirement') || 'Water Requirement'}</div>
-                  <div className="font-medium inline-flex items-center gap-1"><Droplets className="w-4 h-4 text-[#2E7D32]" /> {details.metrics?.water_requirement || '—'}</div>
+                <div className="rounded-xl bg-background p-3 border border-surface-variant/30">
+                  <div className="text-sm text-text-med font-medium">{t('water_requirement') || 'Water Requirement'}</div>
+                  <div className="font-bold text-text-high inline-flex items-center gap-1"><Droplets className="w-4 h-4 text-primary" /> {details.metrics?.water_requirement || '—'}</div>
                 </div>
               </div>
             </div>
@@ -184,19 +259,19 @@ export default function FarmsPage() {
 
         {/* Tasks */}
         {details && (
-          <div className="rounded-2xl bg-white shadow-sm border p-4">
+          <div className="rounded-xl-custom bg-surface shadow-card border border-surface-variant/50 p-5">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-lg font-semibold">{t('task_checklist') || 'Task Checklist'}</div>
-              <div className="text-xs text-gray-600">{progress}% {t('complete') || 'complete'}</div>
+              <div className="text-lg font-bold text-text-high">{t('task_checklist') || 'Task Checklist'}</div>
+              <div className="text-xs text-text-med font-medium">{progress}% {t('complete') || 'complete'}</div>
             </div>
-            <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-              <div className="h-full bg-[#2E7D32]" style={{ width: `${progress}%` }} />
+            <div className="h-2 rounded-full bg-surface-variant overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
             </div>
             <ul className="mt-4 space-y-2">
               {details.tasks.map((task) => (
-                <li key={task.id} className="rounded-xl border px-3 py-2 flex items-center gap-3 hover:shadow transition-all" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-                  <input type="checkbox" checked={task.status === 'done'} onChange={() => toggleTask(task)} className="w-4 h-4 rounded border-gray-400 text-[#2E7D32] focus:ring-[#2E7D32]" />
-                  <span className={`text-sm ${task.status === 'done' ? 'line-through text-gray-500' : 'text-gray-800'}`}>{task.title}</span>
+                <li key={task.id} className="rounded-xl bg-background border border-surface-variant/30 px-4 py-2.5 flex items-center gap-3 hover:shadow-sm transition-all">
+                  <input type="checkbox" checked={task.status === 'done'} onChange={() => toggleTask(task)} className="w-4 h-4 rounded border-surface-variant text-primary focus:ring-primary" />
+                  <span className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-text-med' : 'text-text-high'}`}>{task.title}</span>
                 </li>
               ))}
             </ul>
@@ -360,12 +435,42 @@ function EditFarmModal({ details, onClose, onSaved }: { details: any; onClose: (
               <input className="w-full rounded-md border px-3 py-2" value={stateTxt} onChange={(e) => setStateTxt(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">{t('latitude') || 'Latitude'}</label>
-              <input className="w-full rounded-md border px-3 py-2" value={lat} onChange={(e) => setLat(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">{t('longitude') || 'Longitude'}</label>
-              <input className="w-full rounded-md border px-3 py-2" value={lon} onChange={(e) => setLon(e.target.value)} />
+              <label className="block text-sm text-gray-700 mb-1">{t('location') || 'Location (Lat, Lon)'}</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input className="w-full rounded-md border px-3 py-2" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="Latitude" />
+                <input className="w-full rounded-md border px-3 py-2" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="Longitude" />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => { 
+                      const latitude = pos.coords.latitude;
+                      const longitude = pos.coords.longitude;
+                      setLat(String(latitude.toFixed(6))); 
+                      setLon(String(longitude.toFixed(6))); 
+                      
+                      try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await res.json();
+                        if (data?.address) {
+                          if (data.address.state) setStateTxt(data.address.state);
+                          if (data.address.state_district || data.address.county || data.address.district) setDistrict(data.address.state_district || data.address.county || data.address.district);
+                          if (data.address.village || data.address.town || data.address.city) setVillage(data.address.village || data.address.town || data.address.city);
+                        }
+                      } catch (e) {
+                        console.error('Reverse geocoding failed', e);
+                      }
+                    },
+                    (err) => { alert('Could not detect location: ' + err.message); },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                  );
+                }}
+                className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+              >
+                <span className="material-symbols-outlined text-sm">my_location</span> Detect My Location
+              </button>
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-1">{t('area') || 'Area'}</label>
@@ -395,7 +500,10 @@ function EditFarmModal({ details, onClose, onSaved }: { details: any; onClose: (
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-1">{t('crop_name') || 'Crop'}</label>
-              <input className="w-full rounded-md border px-3 py-2" value={crop} onChange={(e) => setCrop(e.target.value)} />
+              <select className="w-full rounded-md border px-3 py-2" value={crop} onChange={(e) => setCrop(e.target.value)}>
+                <option value="">— Select Crop —</option>
+                {CROP_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-1">{t('variety') || 'Variety'}</label>
@@ -593,21 +701,54 @@ function QuickAddForm({ onSuccess }: { onSuccess: () => void }) {
             </select>
           </div>
         </div>
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">{t('latitude') || 'Latitude'}</label>
-          <input className="w-full rounded-md border px-3 py-2" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="11.8740" />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">{t('longitude') || 'Longitude'}</label>
-          <input className="w-full rounded-md border px-3 py-2" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="75.3704" />
+        <div className="sm:col-span-2">
+          <label className="block text-sm text-gray-700 mb-1">{t('location') || 'Location (Lat, Lon)'}</label>
+          <div className="grid grid-cols-2 gap-2">
+            <input className="w-full rounded-md border px-3 py-2" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="Latitude" />
+            <input className="w-full rounded-md border px-3 py-2" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="Longitude" />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+              navigator.geolocation.getCurrentPosition(
+                async (pos) => { 
+                  const latitude = pos.coords.latitude;
+                  const longitude = pos.coords.longitude;
+                  setLat(String(latitude.toFixed(6))); 
+                  setLon(String(longitude.toFixed(6))); 
+                  
+                  try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await res.json();
+                    if (data?.address) {
+                      if (data.address.state) setStateTxt(data.address.state);
+                      if (data.address.state_district || data.address.county || data.address.district) setDistrict(data.address.state_district || data.address.county || data.address.district);
+                      if (data.address.village || data.address.town || data.address.city) setVillage(data.address.village || data.address.town || data.address.city);
+                    }
+                  } catch (e) {
+                    console.error('Reverse geocoding failed', e);
+                  }
+                },
+                (err) => { alert('Could not detect location: ' + err.message); },
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            }}
+            className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+          >
+            <span className="material-symbols-outlined text-sm">my_location</span> Detect My Location
+          </button>
         </div>
         <div>
           <label className="block text-sm text-gray-700 mb-1">{t('soil_type') || 'Soil Type'}</label>
           <input className="w-full rounded-md border px-3 py-2" value={soilType} onChange={(e) => setSoilType(e.target.value)} placeholder="Loamy" />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">{t('crop_name') || 'Current Crop (name)'}</label>
-          <input className="w-full rounded-md border px-3 py-2" value={crop} onChange={(e) => setCrop(e.target.value)} placeholder="Rice" />
+          <label className="block text-sm text-gray-700 mb-1">{t('crop_name') || 'Current Crop'}</label>
+          <select className="w-full rounded-md border px-3 py-2" value={crop} onChange={(e) => setCrop(e.target.value)}>
+            <option value="">— Select Crop —</option>
+            {CROP_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
         <div>
           <label className="block text-sm text-gray-700 mb-1">{t('variety') || 'Variety'}</label>

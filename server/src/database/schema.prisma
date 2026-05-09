@@ -78,10 +78,11 @@ model Farm {
   livestock            Json?
   equipment            Json?
 
-  user       User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
   cropCycles CropCycle[]
   tasks      Task[]
   metrics    FarmMetrics?
+  sensors    SensorDevice[]
 
   @@index([user_id])
 }
@@ -201,4 +202,46 @@ model Grievance {
 
   @@index([user_id])
   @@index([status])
+}
+
+model SensorDevice {
+  id           Int       @id @default(autoincrement())
+  farm_id      Int
+  device_name  String    @default("ESP32 Sensor Kit")
+  api_key_hash String    @unique
+  sensor_types String[]  @default(["dht11_temp", "dht11_humidity", "soil_moisture", "soil_temp", "npk_n", "npk_p", "npk_k"])
+  is_active    Boolean   @default(true)
+  last_seen_at DateTime?
+  created_at   DateTime  @default(now())
+
+  farm     Farm            @relation(fields: [farm_id], references: [id], onDelete: Cascade)
+  readings SensorReading[]
+
+  @@index([farm_id])
+  @@index([api_key_hash])
+}
+
+model SensorReading {
+  id          Int      @id @default(autoincrement())
+  device_id   Int
+  recorded_at DateTime @default(now())
+
+  // DHT11
+  temperature   Float?
+  humidity      Float?
+
+  // Soil Moisture Sensor
+  soil_moisture Float?
+
+  // Soil Temperature
+  soil_temp     Float?
+
+  // NPK Sensor
+  nitrogen      Float?
+  phosphorus    Float?
+  potassium     Float?
+
+  device SensorDevice @relation(fields: [device_id], references: [id], onDelete: Cascade)
+
+  @@index([device_id, recorded_at])
 }

@@ -93,57 +93,71 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9] dark:bg-[#121212]">
-      <div className="mx-auto max-w-none px-0 md:px-4 py-0 md:py-4">
-        <Suspense fallback={null}>
-          <BootstrapQuery />
-        </Suspense>
+    <div className="max-w-4xl mx-auto md:py-6 h-[calc(100vh-80px)] md:h-[calc(100vh-100px)]">
+      <Suspense fallback={null}>
+        <BootstrapQuery />
+      </Suspense>
 
-        {/* Messenger-like full-height layout */}
-        <div className="flex flex-col h-[calc(100vh-96px)] md:h-[calc(100vh-112px)]">
-          {/* Header */}
-          <div className="px-4 py-3 border-b bg-white/90 dark:bg-[#121212]/90 dark:border-gray-800 backdrop-blur">
-            <h1 className="text-2xl md:text-3xl font-semibold">{t('chat_title') || 'Ask Krishi Mitra'}</h1>
-          </div>
+      {/* Messenger-like Layout */}
+      <div className="flex flex-col h-full bg-white/60 dark:bg-card-bg/60 backdrop-blur-xl border-x md:border border-gray-200/50 dark:border-white/10 md:rounded-3xl shadow-soft overflow-hidden relative">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-md z-10">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">{t('chat_title') || 'Ask Krishi Mitra'}</h1>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">AI-Powered Agricultural Assistant</p>
+        </div>
 
-          {/* Messages list */}
-          <div ref={listRef} className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-3 pb-28 md:pb-4">
-            {messages.length === 0 && !loading && (
-              <div className="text-center text-gray-600 text-base mt-8">{t('question_placeholder') || 'Ask anything about your crop, weather, irrigation or pests…'}</div>
-            )}
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`${m.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-900 border dark:bg-[#1E1E1E] dark:text-gray-100 dark:border-gray-700'} px-4 py-3 rounded-2xl shadow-sm max-w-[88%] md:max-w-[70%] text-base leading-relaxed`}>{m.text}</div>
+        {/* Messages list */}
+        <div ref={listRef} className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-5 pb-32 custom-scrollbar">
+          {messages.length === 0 && !loading && (
+            <div className="flex flex-col items-center justify-center h-full text-center max-w-sm mx-auto">
+              <div className="w-16 h-16 bg-brand/10 dark:bg-brand/20 rounded-full flex items-center justify-center mb-4">
+                <span className="text-3xl">🌱</span>
               </div>
-            ))}
-            {loading && <div className="text-sm text-gray-600 dark:text-gray-400">…</div>}
-          </div>
+              <div className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">{t('question_placeholder') || 'Ask anything about your crop, weather, irrigation or pests…'}</div>
+            </div>
+          )}
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`${m.role === 'user' ? 'bg-brand text-white rounded-br-sm shadow-brand/20' : 'bg-white text-gray-800 border border-gray-100 dark:bg-card-bg dark:text-gray-200 dark:border-white/5 rounded-bl-sm shadow-sm'} px-5 py-3.5 rounded-3xl max-w-[85%] md:max-w-[70%] text-sm md:text-base leading-relaxed shadow-lg`}>
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-white text-gray-800 border border-gray-100 dark:bg-card-bg dark:text-gray-200 dark:border-white/5 px-5 py-3.5 rounded-3xl rounded-bl-sm shadow-sm flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-brand/60 animate-bounce" />
+                <div className="w-2 h-2 rounded-full bg-brand/60 animate-bounce delay-75" />
+                <div className="w-2 h-2 rounded-full bg-brand/60 animate-bounce delay-150" />
+              </div>
+            </div>
+          )}
+        </div>
 
-          {/* Composer */}
-          <div className="sticky bottom-[72px] md:bottom-0 w-full border-t bg-white dark:bg-[#121212] dark:border-gray-800 px-3 md:px-6 py-3 z-20" style={{ bottom: '72px' }}>
-            <form onSubmit={onSubmit} className="flex items-center gap-2">
-              <VoiceButton onTranscript={(tx) => doAsk(tx)} title={t('voice') || 'Voice'} />
+        {/* Composer */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200/50 dark:border-white/10 bg-white/80 dark:bg-card-bg/80 backdrop-blur-xl p-4 md:p-6 z-20 pb-safe pb-24 md:pb-6">
+          <form onSubmit={onSubmit} className="flex items-center gap-3 max-w-3xl mx-auto">
+            <VoiceButton onTranscript={(tx) => doAsk(tx)} title={t('voice') || 'Voice'} />
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={t('ask_question') || 'Type your message…'}
+              className="flex-1 rounded-full px-5 py-3 border-gray-200/80 dark:border-white/10 shadow-inner bg-gray-50/50 dark:bg-black/20"
+            />
+            {/* Optional crop on wide screens */}
+            <div className="hidden md:flex items-center gap-2 w-32 shrink-0">
               <Input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder={t('ask_question') || 'Type your message…'}
-                className="flex-1 rounded-2xl px-4 py-2"
+                value={crop}
+                onChange={(e) => setCrop(e.target.value)}
+                placeholder={t('crop_optional') || 'Crop'}
+                className="w-full rounded-full px-4 py-3 border-gray-200/80 dark:border-white/10 shadow-inner bg-gray-50/50 dark:bg-black/20"
               />
-              <Button disabled={loading || !text.trim()} className="rounded-2xl px-4">
-                {loading ? (t('thinking') || 'Thinking…') : (t('ask_button') || 'Send')}
-              </Button>
-              {/* Optional crop on wide screens */}
-              <div className="hidden md:flex items-center gap-2">
-                <Input
-                  value={crop}
-                  onChange={(e) => setCrop(e.target.value)}
-                  placeholder={t('crop_optional') || 'Crop (optional)'}
-                  className="w-48 rounded-xl"
-                />
-              </div>
-            </form>
-          </div>
+            </div>
+            <Button disabled={loading || !text.trim()} className="rounded-full px-6 py-3 font-semibold shadow-md">
+              {loading ? (t('thinking') || 'Thinking') : (t('ask_button') || 'Send')}
+            </Button>
+          </form>
         </div>
       </div>
     </div>

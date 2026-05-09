@@ -33,7 +33,7 @@ export class ChatService {
       const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEN_AI_API_KEY}`;
       const r = await fetch(listUrl);
       if (r.ok) {
-        const j = await r.json();
+        const j: any = await r.json();
         const models: { name?: string }[] = Array.isArray(j?.models) ? j.models : [];
         const names = models.map((m) => (m.name || '')).filter(Boolean);
         const pickFull =
@@ -45,7 +45,7 @@ export class ChatService {
         ChatService.resolvedModel = id;
         return id;
       }
-    } catch {}
+    } catch { }
     // Fallback if discovery fails
     return 'gemini-1.5-pro';
   }

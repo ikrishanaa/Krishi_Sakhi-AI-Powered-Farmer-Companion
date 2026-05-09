@@ -2,29 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #FFFFFF;
-  --foreground: #212121;
-  --brand: #2E7D32;
-  --secondary: #1565C0;
-}
+@layer base {
+  :root {
+    --background: #F8FAFC; /* Softer white/slate-50 */
+    --foreground: #0F172A; /* Slate 900 */
+    --brand: #059669;      /* Emerald 600 */
+    --secondary: #334155;  /* Slate 700 */
+    --card-bg: #FFFFFF;
+  }
 
-.dark {
-  --background: #121212;
-  --foreground: #FAFAFA;
-  --brand: #66BB6A;
-  --card-bg: #1E1E1E;
-}
+  .dark {
+    --background: #0B1120; /* Deep Slate */
+    --foreground: #F8FAFC; /* Slate 50 */
+    --brand: #10B981;      /* Emerald 500 */
+    --card-bg: #1E293B;    /* Slate 800 */
+  }
 
-html, body {
-  height: 100%;
-}
+  html, body {
+    height: 100%;
+  }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-outfit), sans-serif;
+  }
 }
 
 /* Accessibility helpers */
@@ -55,3 +59,29 @@ body {
 /* Text defaults: gracefully lift gray-700 in dark */
 .dark .text-gray-700 { color: #e5e7eb !important; }
 .dark .text-gray-600 { color: #d1d5db !important; }
+
+/* Custom styles for the large organic shapes */
+.rounded-xl-custom {
+  border-radius: 28px;
+}
+
+.pill-shape {
+  border-radius: 9999px;
+}
+
+/* Microphone Pulse Animation */
+@keyframes ripple {
+  0% {
+      box-shadow: 0 0 0 0 rgba(46, 86, 53, 0.3);
+  }
+  70% {
+      box-shadow: 0 0 0 20px rgba(46, 86, 53, 0);
+  }
+  100% {
+      box-shadow: 0 0 0 0 rgba(46, 86, 53, 0);
+  }
+}
+
+.mic-ripple {
+  animation: ripple 2s infinite;
+}

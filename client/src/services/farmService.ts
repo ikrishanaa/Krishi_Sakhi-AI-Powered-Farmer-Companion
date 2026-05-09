@@ -48,3 +48,18 @@ export async function uploadSoilReport(farmId: number, file: File) {
   const { data } = await api.post(`/farms/${farmId}/soil-report`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   return data;
 }
+
+export async function deleteFarm(farmId: number) {
+  const { data } = await api.delete(`/farms/${farmId}`);
+  return data;
+}
+
+export async function addCropCycle(farmId: number, body: { crop_name: string; variety?: string; stage?: string; sowing_date: string; expected_harvest_date?: string; seed_source?: string }) {
+  const { data } = await api.post(`/farms/${farmId}/crops`, body);
+  return data;
+}
+
+export async function deleteCropCycle(farmId: number, cycleId: number) {
+  const { data } = await api.delete(`/farms/${farmId}/crops/${cycleId}`);
+  return data;
+}

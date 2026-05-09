@@ -1,5 +1,12 @@
+import { Public_Sans } from 'next/font/google';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+
+const publicSans = Public_Sans({
+  subsets: ['latin'],
+  variable: '--font-public-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Krishi Sakhi',
@@ -8,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#16a34a',
+  themeColor: '#2E5635',
 };
 
 import Header from '@/components/Header';
@@ -24,21 +31,22 @@ import ChunkReload from '@/components/pwa/ChunkReload';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${publicSans.variable} antialiased`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#16a34a" />
+        <meta name="theme-color" content="#2E5635" />
         <link rel="icon" href="/favicon.ico" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
-      <body className="min-h-screen bg-[#F1F5F9] text-[#212121] dark:bg-[#121212] dark:text-[#FAFAFA]">
+      <body className="min-h-screen bg-background text-foreground selection:bg-primary/20">
         {/* Wrap app in I18nProvider to enable translations */}
         {/* eslint-disable-next-line @next/next/no-head-element */}
         <I18nProvider>
           <ThemeProvider>
             <DataSaverProvider>
               <Header />
-<main className="mx-auto max-w-3xl px-4 py-6 pb-6 md:pb-0">{children}</main>
+              <main className="mx-auto max-w-3xl px-4 py-6 pb-6 md:pb-0">{children}</main>
               <HideOnRoutes prefixes={["/admin"]}>
                 <FloatingMicFab />
               </HideOnRoutes>

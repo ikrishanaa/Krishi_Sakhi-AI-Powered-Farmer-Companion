@@ -114,14 +114,39 @@ export class FarmsController {
           cropCycles: {
             where: { status: 'active' },
             orderBy: { id: 'desc' },
-            take: 1,
           },
           tasks: {
             orderBy: { created_at: 'desc' },
           },
+          sensors: {
+            where: { is_active: true },
+            select: { id: true, device_name: true, last_seen_at: true },
+          },
         },
       });
       if (!farm) return res.status(404).json({ error: 'Farm not found' });
+
+      // Get latest sensor reading if device exists
+      let latestReading = null;
+      if (farm.sensors.length > 0) {
+        const deviceIds = farm.sensors.map(s => s.id);
+        const reading = await prisma.sensorReading.findFirst({
+          where: { device_id: { in: deviceIds } },
+          orderBy: { recorded_at: 'desc' },
+        });
+        if (reading) {
+          latestReading = {
+            recorded_at: reading.recorded_at,
+            temperature: reading.temperature,
+            humidity: reading.humidity,
+            soil_moisture: reading.soil_moisture,
+            soil_temp: reading.soil_temp,
+            nitrogen: reading.nitrogen,
+            phosphorus: reading.phosphorus,
+            potassium: reading.potassium,
+          };
+        }
+      }
 
       const status = statusFromMetrics(farm.metrics || undefined);
       return res.json({
@@ -138,8 +163,19 @@ export class FarmsController {
           crop: farm.cropCycles[0]?.crop_name || null,
           status,
         },
+        cropCycles: farm.cropCycles.map(c => ({
+          id: c.id,
+          crop_name: c.crop_name,
+          variety: c.variety,
+          stage: c.stage,
+          sowing_date: c.sowing_date,
+          expected_harvest_date: c.expected_harvest_date,
+          status: c.status,
+        })),
         metrics: farm.metrics || null,
         tasks: farm.tasks.map((t) => ({ id: t.id, title: t.title, status: t.status, due_date: t.due_date, created_at: t.created_at, completed_at: t.completed_at })),
+        sensors: farm.sensors,
+        latestReading,
       });
     } catch (e: any) {
       return res.status(500).json({ error: e?.message || 'Failed to load farm details' });
@@ -359,6 +395,77 @@ export class FarmsController {
       return res.json({ ok: true, soil_test_report_url: url });
     } catch (e: any) {
       return res.status(500).json({ error: e?.message || 'Failed to upload report' });
+    }
+  }
+
+  static async deleteFarm(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      if (!user?.sub) return res.status(401).json({ error: 'Unauthorized' });
+      const userId = parseInt(String(user.sub), 10);
+      const farmId = parseInt(String(req.params.id), 10);
+
+      const farm = await prisma.farm.findFirst({ where: { id: farmId, user_id: userId } });
+      if (!farm) return res.status(404).json({ error: 'Farm not found' });
+
+      await prisma.farm.delete({ where: { id: farmId } });
+      return res.json({ ok: true });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'Failed to delete farm' });
+    }
+  }
+
+  static async addCropCycle(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      if (!user?.sub) return res.status(401).json({ error: 'Unauthorized' });
+      const userId = parseInt(String(user.sub), 10);
+      const farmId = parseInt(String(req.params.farmId), 10);
+      const body = req.body || {};
+
+      const farm = await prisma.farm.findFirst({ where: { id: farmId, user_id: userId } });
+      if (!farm) return res.status(404).json({ error: 'Farm not found' });
+
+      if (!body.crop_name) return res.status(400).json({ error: 'crop_name is required' });
+      if (!body.sowing_date) return res.status(400).json({ error: 'sowing_date is required' });
+
+      const cycle = await prisma.cropCycle.create({
+        data: {
+          farm_id: farmId,
+          crop_name: String(body.crop_name),
+          variety: body.variety || null,
+          stage: body.stage || null,
+          sowing_date: new Date(String(body.sowing_date)),
+          expected_harvest_date: body.expected_harvest_date ? new Date(String(body.expected_harvest_date)) : null,
+          seed_source: body.seed_source || null,
+          status: 'active',
+        },
+      });
+
+      return res.status(201).json({ ok: true, cropCycle: cycle });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'Failed to add crop cycle' });
+    }
+  }
+
+  static async deleteCropCycle(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      if (!user?.sub) return res.status(401).json({ error: 'Unauthorized' });
+      const userId = parseInt(String(user.sub), 10);
+      const farmId = parseInt(String(req.params.farmId), 10);
+      const cycleId = parseInt(String(req.params.cycleId), 10);
+
+      const farm = await prisma.farm.findFirst({ where: { id: farmId, user_id: userId } });
+      if (!farm) return res.status(404).json({ error: 'Farm not found' });
+
+      const cycle = await prisma.cropCycle.findFirst({ where: { id: cycleId, farm_id: farmId } });
+      if (!cycle) return res.status(404).json({ error: 'Crop cycle not found' });
+
+      await prisma.cropCycle.delete({ where: { id: cycleId } });
+      return res.json({ ok: true });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'Failed to delete crop cycle' });
     }
   }
 }

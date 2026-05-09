@@ -12,6 +12,7 @@ import FormField from '@/components/ui/form-field';
 export default function LoginPage() {
   const { t } = useI18n();
   const [mode, setMode] = useState<'password-phone' | 'password-email' | 'otp'>('password-phone');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function LoginPage() {
       if (t) {
         window.location.href = '/dashboard';
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const onRequestOtp = async () => {
@@ -45,13 +46,13 @@ export default function LoginPage() {
     }
   };
 
-const onPasswordLogin = async () => {
+  const onPasswordLogin = async () => {
     setLoading(true);
     setError(null);
     try {
       const payload = mode === 'password-email' ? { email, password } : { phoneNumber, password };
       await loginWithPassword(payload);
-      try { localStorage.setItem('km_role', 'user'); } catch {}
+      try { localStorage.setItem('km_role', 'user'); } catch { }
       setMessage(t('logged_in_success') || 'Logged in successfully.');
       window.location.href = '/dashboard';
     } catch (e: any) {
@@ -66,7 +67,7 @@ const onPasswordLogin = async () => {
     setError(null);
     try {
       await login(phoneNumber, otp);
-      try { localStorage.setItem('km_role', 'user'); } catch {}
+      try { localStorage.setItem('km_role', 'user'); } catch { }
       setMessage(t('logged_in_success') || 'Logged in successfully.');
       window.location.href = '/dashboard';
     } catch (e: any) {
@@ -103,7 +104,7 @@ const onPasswordLogin = async () => {
               <FormField label={t('password') || 'Password'}>
                 <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
               </FormField>
-              <Button onClick={onPasswordLogin} disabled={loading || (!password) || (mode==='password-phone' && !phoneNumber) || (mode==='password-email' && !email)}>
+              <Button onClick={onPasswordLogin} disabled={loading || (!password) || (mode === 'password-phone' && !phoneNumber) || (mode === 'password-email' && !email)}>
                 {loading ? (t('verifying') || 'Verifying…') : (t('sign_in') || 'Sign in')}
               </Button>
 

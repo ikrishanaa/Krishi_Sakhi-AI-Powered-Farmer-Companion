@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test": "jest --runInBand",
     "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
     "prepare": "husky install"
   },
   "dependencies": {

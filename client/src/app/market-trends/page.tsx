@@ -121,50 +121,48 @@ export default function MarketTrendsPage() {
   // Note: if more aggressive saving needed, we can thin datasets or lower points
 
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F1F5F9]">
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('market_trends') || 'Market Trends'}</h1>
-      <Card>
-        <CardHeader>
-          <CardHeaderTitle icon={<SlidersHorizontal className="w-5 h-5 text-emerald-700" />} title={t('market_trends') || 'Market Trends'} />
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-3 items-end">
-            <div>
-              <Label>{t('state') || 'State'}</Label>
-              <Select value={state} onChange={(e) => setState((e.target as HTMLSelectElement).value)}>
-                <option value="">{t('all') || 'All'}</option>
-                {states.map((s) => (<option key={s} value={s}>{s}</option>))}
-              </Select>
-            </div>
-            <div>
-              <Label>{t('city') || 'City'}</Label>
-              <Select value={city} onChange={(e) => setCity((e.target as HTMLSelectElement).value)}>
-                <option value="">{t('all') || 'All'}</option>
-                {cities.map((c) => (<option key={c} value={c}>{c}</option>))}
-              </Select>
-            </div>
-            <div>
-              <Label>{t('crop_optional') || 'Crop'}</Label>
-              <Select value={crop} onChange={(e) => setCrop((e.target as HTMLSelectElement).value)}>
-                {crops.map((c) => (<option key={c} value={c}>{c}</option>))}
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={load}>{t('refresh') || 'Refresh'}</Button>
-              <VoiceButton onTranscript={async () => { await load(); setTimeout(() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }, 120); }} title={t('voice') || 'Voice'} />
-            </div>
+    <div className="max-w-4xl mx-auto space-y-8 px-4 py-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">{t('market_trends') || 'Market Trends'}</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Real-time agricultural commodity prices.</p>
+      </div>
+
+      <Card className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 items-end">
+          <div>
+            <Label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{t('state') || 'State'}</Label>
+            <Select value={state} onChange={(e) => setState((e.target as HTMLSelectElement).value)}>
+              <option value="">{t('all') || 'All'}</option>
+              {states.map((s) => (<option key={s} value={s}>{s}</option>))}
+            </Select>
           </div>
-        </CardContent>
+          <div>
+            <Label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{t('city') || 'City'}</Label>
+            <Select value={city} onChange={(e) => setCity((e.target as HTMLSelectElement).value)}>
+              <option value="">{t('all') || 'All'}</option>
+              {cities.map((c) => (<option key={c} value={c}>{c}</option>))}
+            </Select>
+          </div>
+          <div>
+            <Label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{t('crop_optional') || 'Crop'}</Label>
+            <Select value={crop} onChange={(e) => setCrop((e.target as HTMLSelectElement).value)}>
+              {crops.map((c) => (<option key={c} value={c}>{c}</option>))}
+            </Select>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={load} className="flex-1">{t('refresh') || 'Refresh'}</Button>
+            <VoiceButton onTranscript={async () => { await load(); setTimeout(() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }, 120); }} title={t('voice') || 'Voice'} />
+          </div>
+        </div>
       </Card>
 
-      {error && <p className="text-red-600" aria-live="assertive">{error}</p>}
+      {error && <p className="text-red-500 font-medium" aria-live="assertive">{error}</p>}
+      
       {loading && (
-        <div className="space-y-3" role="status" aria-live="polite">
-          <div className="rounded-md border p-4">
-            <div className="h-4 w-40 animate-pulse bg-gray-200 rounded mb-2" />
-            <div className="h-3 w-24 animate-pulse bg-gray-200 rounded mb-3" />
-            <div className="h-64 w-full animate-pulse bg-gray-200 rounded" />
+        <div className="space-y-4" role="status" aria-live="polite">
+          <div className="rounded-3xl border border-gray-200/50 bg-white/50 p-6 shadow-sm">
+            <div className="h-5 w-48 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-full mb-4" />
+            <div className="h-64 w-full animate-pulse bg-gray-200 dark:bg-gray-800 rounded-2xl" />
           </div>
         </div>
       )}
@@ -172,23 +170,33 @@ export default function MarketTrendsPage() {
       {series.length > 0 && (
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <LineChart className="w-5 h-5 text-emerald-700" />
-              <CardTitle>{t('market_trends') || 'Market Trends'}</CardTitle>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand/10 text-brand rounded-xl dark:bg-brand/20 dark:text-brand-400">
+                  <LineChart className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <CardTitle>{t('market_trends') || 'Market Trends'}</CardTitle>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">{crop}</p>
+                </div>
+              </div>
+              <Button 
+                variant="soft" 
+                size="sm"
+                onClick={() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }}
+                title={t('speak') || 'Speak'}
+              >
+                <Volume2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                {t('speak') || 'Speak'}
+              </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-2xl bg-sky-100 p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="text-base font-medium text-gray-800">{t('market_trends') || 'Market Trends'} - {crop}</div>
-                <IconButton aria-label={t('speak') || 'Speak'} title={t('speak') || 'Speak'} onClick={() => { try { const last = series[series.length-1]; if (last) speak(`Average price today is rupees ${Math.round(last.avgPrice)}. Minimum ${Math.round(last.minPrice)}, maximum ${Math.round(last.maxPrice)}.`); } catch {} }}>
-                  <Volume2 className="w-4 h-4" aria-hidden="true" />
-                </IconButton>
-              </div>
-            </div>
-            <div style={{ height: 320 }}>
+          <CardContent className="pt-2">
+            <div style={{ height: 360 }} className="relative">
               <Line data={chartData} options={chartOptions} />
-              <div className="mt-2 text-xs text-gray-500">{t('prices_note') || 'Prices in ₹ (indicative, per unit)'}</div>
+            </div>
+            <div className="mt-4 text-xs font-medium text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 py-2 rounded-lg">
+              {t('prices_note') || 'Prices in ₹ (indicative, per unit)'}
             </div>
           </CardContent>
         </Card>
@@ -197,7 +205,6 @@ export default function MarketTrendsPage() {
       {series.length === 0 && !loading && !error && (
         <EmptyState title={t('no_items_yet') || 'No items yet.'} />
       )}
-      </div>
     </div>
   );
 }
