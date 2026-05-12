@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
 
@@ -18,6 +17,10 @@ function getRecognition(): any | null {
   return rec;
 }
 
+/**
+ * Desktop-only floating mic FAB.
+ * On mobile (< md), the mic is integrated directly into the BottomNav dock.
+ */
 export default function FloatingMicFab() {
   const { t } = useI18n();
   const router = useRouter();
@@ -47,8 +50,7 @@ export default function FloatingMicFab() {
       recRef.current.onresult = (e: any) => {
         const text = e.results?.[0]?.[0]?.transcript || '';
         if (text) {
-          const q = encodeURIComponent(text);
-          router.push(`/chat?q=${q}`);
+          router.push(`/chat?q=${encodeURIComponent(text)}`);
         } else {
           router.push('/chat');
         }
@@ -66,16 +68,16 @@ export default function FloatingMicFab() {
   if (pathname.startsWith('/chat')) return null;
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center h-20 pointer-events-none z-50 pb-safe md:h-auto md:bottom-8 md:right-8 md:left-auto md:translate-x-0 md:pb-0">
+    // Desktop only — hidden on mobile where mic lives in BottomNav
+    <div className="hidden md:block fixed z-50 bottom-8 right-8">
       <button
         type="button"
         onClick={onClick}
         aria-label={t('voice') || 'Voice Assistant'}
         title={t('voice') || 'Voice Assistant'}
-        className={`pointer-events-auto w-[72px] h-[72px] md:w-20 md:h-20 bg-primary text-on-primary rounded-full shadow-fab flex items-center justify-center transition-transform active:scale-95 group relative overflow-hidden -translate-y-1 md:translate-y-0 ${recording ? 'mic-ripple' : ''}`}
+        className={`w-16 h-16 bg-primary text-on-primary rounded-full shadow-fab flex items-center justify-center transition-all duration-200 active:scale-90 ${recording ? 'mic-ripple scale-110' : 'hover:scale-105 hover:shadow-xl'}`}
       >
-        <div className={`absolute inset-0 rounded-full border-2 border-white/20 ${recording ? 'animate-ping-slow' : ''}`}></div>
-        <span className="material-symbols-outlined relative z-10 text-[36px] md:text-[40px]">mic</span>
+        <span className="material-symbols-outlined text-[32px]">mic</span>
       </button>
     </div>
   );

@@ -78,10 +78,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F0FDF4]">
-      <div className="mx-auto max-w-md min-h-[80vh] flex items-center justify-center py-12 md:py-16">
-        <div className="w-full rounded-2xl bg-white shadow-xl border p-6 md:p-8">
-          <h1 className="text-2xl font-semibold tracking-tight mb-4">{t('login') || 'Login'}</h1>
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-[#F0FDF4] dark:bg-background">
+      <div className="mx-auto max-w-md min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center px-4 py-8 sm:py-12 md:py-16">
+        <div className="w-full rounded-2xl bg-white shadow-xl border p-5 sm:p-6 md:p-8">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight mb-4">{t('login') || 'Login'}</h1>
 
           {/* Password login (phone or email) */}
           {mode !== 'otp' && (
@@ -104,15 +104,15 @@ export default function LoginPage() {
               <FormField label={t('password') || 'Password'}>
                 <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
               </FormField>
-              <Button onClick={onPasswordLogin} disabled={loading || (!password) || (mode === 'password-phone' && !phoneNumber) || (mode === 'password-email' && !email)}>
+              <Button onClick={onPasswordLogin} disabled={loading || (!password) || (mode === 'password-phone' && !phoneNumber) || (mode === 'password-email' && !email)} className="w-full">
                 {loading ? (t('verifying') || 'Verifying…') : (t('sign_in') || 'Sign in')}
               </Button>
 
-              <div className="space-y-2 pt-2">
-                <Button variant="outline" onClick={() => setMode(mode === 'password-email' ? 'password-phone' : 'password-email')}>
+              <div className="flex flex-col gap-2 pt-2">
+                <Button variant="outline" onClick={() => setMode(mode === 'password-email' ? 'password-phone' : 'password-email')} className="w-full">
                   {mode === 'password-email' ? (t('sign_in_with_phone') || 'Sign in with Phone') : (t('sign_in_with_email') || 'Sign in with Email')}
                 </Button>
-                <Button variant="ghost" onClick={() => setMode('otp')}>
+                <Button variant="ghost" onClick={() => setMode('otp')} className="w-full">
                   {t('sign_in_with_otp') || 'Sign in with Phone OTP'}
                 </Button>
               </div>

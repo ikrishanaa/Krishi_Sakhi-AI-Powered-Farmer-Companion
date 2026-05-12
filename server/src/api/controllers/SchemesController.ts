@@ -17,7 +17,12 @@ const storage = multer.diskStorage({
     cb(null, `${base}${ext}`);
   },
 });
-export const schemeImageUpload = multer({ storage, limits: { fileSize: 8 * 1024 * 1024 } }).single('image');
+const imageFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (allowed.includes(file.mimetype)) return cb(null, true);
+  cb(new Error('Only image files (jpeg, png, webp, gif) are allowed'));
+};
+export const schemeImageUpload = multer({ storage, limits: { fileSize: 8 * 1024 * 1024 }, fileFilter: imageFilter }).single('image');
 
 export class SchemesController {
   static async listPublic(req: Request, res: Response) {

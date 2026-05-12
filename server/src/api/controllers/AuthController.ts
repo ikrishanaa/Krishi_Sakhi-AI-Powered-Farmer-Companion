@@ -30,8 +30,13 @@ export class AuthController {
     }
     const { phoneNumber } = parsed.data;
 
-    await authService.requestOtp(phoneNumber);
-    return res.status(200).json({ success: true, message: 'OTP sent if the number is valid' });
+    try {
+      await authService.requestOtp(phoneNumber);
+      return res.status(200).json({ success: true, message: 'OTP sent if the number is valid' });
+    } catch (err: any) {
+      const status = err.status || 500;
+      return res.status(status).json({ error: err.message || 'Failed to send OTP' });
+    }
   }
 
   static async login(req: Request, res: Response) {

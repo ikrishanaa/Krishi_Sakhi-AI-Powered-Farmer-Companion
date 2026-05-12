@@ -346,16 +346,16 @@ export default function DashboardPage() {
           {/* Main Content Area */}
           <main className="flex-1 flex flex-col p-4 md:p-8 gap-6 relative z-10 overflow-y-auto pb-32 md:pb-8">
             {/* Header / Greeting */}
-            <header className="flex justify-between items-center py-2 md:hidden">
+            <header className="flex justify-between items-center py-1 md:hidden">
               <div>
-                <h1 className="text-text-high text-xl font-bold tracking-tight">Namaste, {welcomeName || 'Friend'}</h1>
+                <h1 className="text-text-high text-lg font-bold tracking-tight">Namaste, {welcomeName || 'Friend'}</h1>
                 <p className="text-text-med text-sm font-medium">
                   {new Intl.DateTimeFormat('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date())}
                 </p>
               </div>
-              <button aria-label="Notifications" onClick={() => window.location.href='/alerts'} className="w-12 h-12 flex items-center justify-center rounded-full bg-surface-variant text-primary shrink-0 relative">
-                <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>notifications</span>
-                {alerts.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-surface-variant"></span>}
+              <button aria-label="Notifications" onClick={() => window.location.href='/alerts'} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-variant text-primary shrink-0 relative">
+                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>notifications</span>
+                {alerts.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-surface-variant"></span>}
               </button>
             </header>
 

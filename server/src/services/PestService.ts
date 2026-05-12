@@ -35,51 +35,25 @@ export class PestService {
     return PestService.ai;
   }
 
-  private async resolveModel(): Promise<string> {
-    const envModel = (env.GEN_AI_MODEL || '').trim();
-    if (envModel) return envModel.startsWith('models/') ? envModel.slice('models/'.length) : envModel;
+  private resolveModel(): string {
     if (PestService.resolvedModel) return PestService.resolvedModel;
-    try {
-      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEN_AI_API_KEY}`;
-      const r = await fetch(listUrl);
-      if (r.ok) {
-        const j: any = await r.json();
-        const models: { name?: string }[] = Array.isArray(j?.models) ? j.models : [];
-        const names = models.map((m) => m.name || '').filter(Boolean);
-        const pickFull =
-          names.find((n) => n.includes('gemini-1.5-pro')) ||
-          names.find((n) => n.includes('gemini-1.5-flash')) ||
-          names.find((n) => n.includes('gemini-1.0-pro')) ||
-          '';
-        const id = pickFull ? (pickFull.startsWith('models/') ? pickFull.slice('models/'.length) : pickFull) : 'gemini-1.5-pro';
-        PestService.resolvedModel = id;
-        return id;
-      }
-    } catch { }
+    const envModel = (env.GEN_AI_MODEL || '').trim();
+    if (envModel) {
+      const id = envModel.startsWith('models/') ? envModel.slice('models/'.length) : envModel;
+      PestService.resolvedModel = id;
+      return id;
+    }
     return 'gemini-1.5-pro';
   }
 
   private async callGemini(parts: any[]): Promise<any> {
     const ai = this.getClient();
-    let model = await this.resolveModel();
-    try {
-      const is25 = /2\.5/.test(model);
-      const req: any = { model, contents: [{ role: 'user', parts }] };
-      if (is25) req.config = { thinkingConfig: { thinkingBudget: 0 } };
-      const resp = await ai.models.generateContent(req);
-      return resp;
-    } catch (e: any) {
-      if (String(e?.message || '').includes('404') || String(e?.error?.status || '').includes('NOT_FOUND')) {
-        PestService.resolvedModel = null;
-        model = await this.resolveModel();
-        const is25b = /2\.5/.test(model);
-        const req2: any = { model, contents: [{ role: 'user', parts }] };
-        if (is25b) req2.config = { thinkingConfig: { thinkingBudget: 0 } };
-        const resp = await ai.models.generateContent(req2);
-        return resp;
-      }
-      throw e;
-    }
+    const model = this.resolveModel();
+    const is25 = /2\.5/.test(model);
+    const req: any = { model, contents: [{ role: 'user', parts }] };
+    if (is25) req.config = { thinkingConfig: { thinkingBudget: 0 } };
+    const resp = await ai.models.generateContent(req);
+    return resp;
   }
 
   async analyze({ file, crop, notes, lat, lon }: AnalyzeReq): Promise<PestAnalysis> {

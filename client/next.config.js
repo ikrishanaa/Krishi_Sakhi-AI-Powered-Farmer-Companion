@@ -63,12 +63,6 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  i18n: {
-    locales: ['en', 'hi', 'ml', 'pa'],
-    defaultLocale: 'en',
-    // Some Next.js versions require localeDetection=false with App Router i18n
-    localeDetection: false,
-  },
   async rewrites() {
     return [
       {

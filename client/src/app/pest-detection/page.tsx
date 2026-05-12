@@ -115,12 +115,12 @@ export default function PestDetectionPage() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-center min-h-[calc(100vh-180px)] px-0 md:px-4">
+      <div className="flex items-center justify-center min-h-[calc(100dvh-160px)] sm:min-h-[calc(100vh-180px)] px-0 sm:px-2 md:px-4">
         <div className="w-full max-w-2xl mx-auto">
-          <div className="rounded-2xl bg-white dark:bg-[#1E1E1E] shadow-sm border dark:border-gray-700 p-5 md:p-6">
-            <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-semibold">🌿 AI Pest & Disease Analysis</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Upload a photo and describe the symptoms to get instant insights.</p>
+          <div className="rounded-none sm:rounded-2xl bg-white dark:bg-[#1E1E1E] shadow-sm border-0 sm:border dark:border-gray-700 p-4 sm:p-5 md:p-6">
+            <div className="mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold">🌿 AI Pest & Disease Analysis</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">Upload a photo and describe the symptoms to get instant insights.</p>
             </div>
 
             <form onSubmit={onSubmit} className="space-y-5">
@@ -140,7 +140,7 @@ export default function PestDetectionPage() {
                 <Label>{t('photo_label')}</Label>
                 {!previewUrl ? (
                   <div
-                    className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${dragActive ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-300 dark:border-gray-700 hover:border-emerald-500 dark:hover:border-emerald-400'}`}
+                    className={`mt-2 border-2 border-dashed rounded-xl p-8 sm:p-6 text-center cursor-pointer transition-colors ${dragActive ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-300 dark:border-gray-700 hover:border-emerald-500 dark:hover:border-emerald-400'}`}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
@@ -213,7 +213,7 @@ export default function PestDetectionPage() {
                 {t('location')}: {coords.lat?.toFixed(4) || '—'}, {coords.lon?.toFixed(4) || '—'}
               </div>
 
-              <Button disabled={loading || !file} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700">
+              <Button disabled={loading || !file} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-base py-3.5">
                 {loading ? (
                   <span className="inline-flex items-center">
                     <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

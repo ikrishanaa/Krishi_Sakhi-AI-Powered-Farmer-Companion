@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProvider>
             <DataSaverProvider>
               <Header />
-              <main className="mx-auto max-w-3xl px-4 py-6 pb-6 md:pb-0">{children}</main>
+              <main className="mx-auto max-w-3xl px-3 sm:px-4 py-4 sm:py-6 pb-24 md:pb-6">{children}</main>
               <HideOnRoutes prefixes={["/admin"]}>
                 <FloatingMicFab />
               </HideOnRoutes>

@@ -129,14 +129,14 @@ export default function FarmsPage() {
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-6 pb-28">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-4 sm:py-6 pb-28">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-text-high">{t('hello') || 'Hello'} {farmerName ? `${farmerName},` : ''}</h1>
-            <div className="text-text-med font-medium">{t('you_have_farms') || 'You have'} {farms.length} {t('farms') || 'farms'}</div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-high">{t('hello') || 'Hello'} {farmerName ? `${farmerName},` : ''}</h1>
+            <div className="text-text-med font-medium text-sm">{t('you_have_farms') || 'You have'} {farms.length} {t('farms') || 'farms'}</div>
           </div>
-          <Button className="rounded-full bg-primary text-on-primary hover:opacity-90 flex items-center gap-2 px-5 py-2.5 font-bold shadow-sm" onClick={() => setShowAdd(true)}>
+          <Button className="rounded-full bg-primary text-on-primary hover:opacity-90 flex items-center gap-2 px-4 sm:px-5 py-2.5 font-bold shadow-sm w-full sm:w-auto justify-center" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" /> {t('add_farm') || 'Add Farm'}
           </Button>
         </div>
@@ -158,9 +158,9 @@ export default function FarmsPage() {
         </div>
 
         {/* Farm tabs as cards */}
-        <div className="flex gap-3 overflow-x-auto pb-2 mb-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 mb-4 hide-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
           {farms.map((f) => (
-            <button key={f.id} onClick={() => setActiveId(f.id)} className={`shrink-0 rounded-2xl bg-white shadow-sm border p-4 min-w-[200px] text-left hover:shadow transition-all ${activeId === f.id ? 'ring-2 ring-[#2E7D32]' : ''}`}>
+            <button key={f.id} onClick={() => setActiveId(f.id)} className={`shrink-0 rounded-2xl bg-white shadow-sm border p-3 sm:p-4 min-w-[170px] sm:min-w-[200px] text-left hover:shadow transition-all ${activeId === f.id ? 'ring-2 ring-[#2E7D32]' : ''}`}>
               <div className="flex items-center justify-between mb-1">
                 <div className="text-base font-semibold">{f.name || `Farm ${f.id}`}</div>
                 <Pill>{f.status}</Pill>
@@ -286,8 +286,8 @@ export default function FarmsPage() {
       {showAdd && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowAdd(false)} />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl">
-            <div className="rounded-2xl bg-white shadow-2xl border p-5 max-h-[80vh] overflow-y-auto">
+          <div className="absolute inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:max-w-3xl">
+            <div className="rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl border p-4 sm:p-5 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xl font-semibold">🌱 {t('add_farm') || 'Add Farm'}</h2>
                 <button className="rounded-md border px-3 py-1.5" onClick={() => setShowAdd(false)}>Close</button>
@@ -410,8 +410,8 @@ function EditFarmModal({ details, onClose, onSaved }: { details: any; onClose: (
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl">
-        <div className="rounded-2xl bg-white shadow-2xl border p-5 max-h-[80vh] overflow-y-auto">
+      <div className="absolute inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:max-w-3xl">
+        <div className="rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl border p-4 sm:p-5 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">{t('update_details') || 'Update Details'}</h2>
             <button className="rounded-md border px-3 py-1.5" onClick={onClose}>Close</button>

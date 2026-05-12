@@ -38,7 +38,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
 // Primary Axios (can point to ngrok) and a same-origin fallback client (/api -> Next dev rewrite)
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
-  timeout: 12000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -46,7 +46,7 @@ const api: AxiosInstance = axios.create({
 
 const fallbackApi: AxiosInstance = axios.create({
   baseURL: '/api',
-  timeout: 12000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },

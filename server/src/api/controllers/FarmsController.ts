@@ -33,8 +33,18 @@ const storage = multer.diskStorage({
     cb(null, `${base}${ext}`);
   },
 });
-export const farmsPhotosUpload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }).array('photos', 6);
-export const farmReportUpload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }).single('report');
+const imageFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (allowed.includes(file.mimetype)) return cb(null, true);
+  cb(new Error('Only image files (jpeg, png, webp, gif) are allowed'));
+};
+const reportFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+  if (allowed.includes(file.mimetype)) return cb(null, true);
+  cb(new Error('Only image or PDF files are allowed'));
+};
+export const farmsPhotosUpload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter }).array('photos', 6);
+export const farmReportUpload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: reportFilter }).single('report');
 
 export class FarmsController {
   static async list(req: Request, res: Response) {

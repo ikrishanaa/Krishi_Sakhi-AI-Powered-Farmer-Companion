@@ -70,18 +70,27 @@ export class HardwareController {
 
       const body = req.body || {};
 
-      const reading = await prisma.sensorReading.create({
-        data: {
-          device_id: device.id,
-          temperature: body.temperature != null ? Number(body.temperature) : null,
-          humidity: body.humidity != null ? Number(body.humidity) : null,
-          soil_moisture: body.soil_moisture != null ? Number(body.soil_moisture) : null,
-          soil_temp: body.soil_temp != null ? Number(body.soil_temp) : null,
-          nitrogen: body.nitrogen != null ? Number(body.nitrogen) : null,
-          phosphorus: body.phosphorus != null ? Number(body.phosphorus) : null,
-          potassium: body.potassium != null ? Number(body.potassium) : null,
-        },
-      });
+      // Validate sensor values are finite numbers within realistic ranges
+      const sensorVal = (v: any, min: number, max: number): number | null => {
+        if (v == null) return null;
+        const n = Number(v);
+        if (!Number.isFinite(n)) return null;
+        if (n < min || n > max) return null;
+        return n;
+      };
+
+      const data = {
+        device_id: device.id,
+        temperature: sensorVal(body.temperature, -50, 80),
+        humidity: sensorVal(body.humidity, 0, 100),
+        soil_moisture: sensorVal(body.soil_moisture, 0, 100),
+        soil_temp: sensorVal(body.soil_temp, -30, 80),
+        nitrogen: sensorVal(body.nitrogen, 0, 1000),
+        phosphorus: sensorVal(body.phosphorus, 0, 1000),
+        potassium: sensorVal(body.potassium, 0, 1000),
+      };
+
+      const reading = await prisma.sensorReading.create({ data });
 
       // Update last_seen_at
       await prisma.sensorDevice.update({
